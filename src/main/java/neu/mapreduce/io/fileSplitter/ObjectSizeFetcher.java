@@ -1,4 +1,4 @@
-package neu.mapreduce.commons.fileSplitter;
+package neu.mapreduce.io.fileSplitter;
 
 /**
  * Created by Amitash on 3/31/15.

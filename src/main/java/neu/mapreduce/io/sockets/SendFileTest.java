@@ -1,4 +1,4 @@
-package neu.mapreduce.commons.sockets;
+package neu.mapreduce.io.sockets;
 
 import java.io.IOException;
 

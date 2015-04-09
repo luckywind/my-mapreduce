@@ -1,4 +1,4 @@
-package neu.mapreduce.commons.sockets;
+package neu.mapreduce.io.sockets;
 
 /**
  * Created by Amitash on 3/31/15.

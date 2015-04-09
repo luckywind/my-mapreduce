@@ -1,7 +1,7 @@
-package neu.mapreduce.api.shuffle;
+package neu.mapreduce.core.shuffle;
 
 import api.MyWriteComparable;
-import neu.mapreduce.api.factory.WriteComparableFactory;
+import neu.mapreduce.core.factory.WriteComparableFactory;
 
 import java.io.*;
 import java.util.ArrayList;

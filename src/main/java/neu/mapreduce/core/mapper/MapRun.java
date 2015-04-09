@@ -1,9 +1,8 @@
-package neu.mapreduce.api.mapper;
+package neu.mapreduce.core.mapper;
 
 import api.MyContext;
-import api.MyWriteComparable;
-import neu.mapreduce.api.factory.MapFactory;
-import neu.mapreduce.api.shuffle.Shuffle;
+import neu.mapreduce.core.factory.MapFactory;
+import neu.mapreduce.core.shuffle.Shuffle;
 
 import java.io.*;
 import java.util.logging.Level;

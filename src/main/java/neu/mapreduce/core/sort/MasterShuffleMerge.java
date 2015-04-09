@@ -1,11 +1,11 @@
-package neu.mapreduce.commons.ShuffleMerge;
+package neu.mapreduce.core.sort;
 
 /**
  * Created by Amitash, Mit on 4/8/15.
  */
 
-import api.MyWriteComparable;
-import neu.mapreduce.api.factory.WriteComparableFactory;
+import neu.mapreduce.core.factory.WriteComparableFactory;
+
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
@@ -14,7 +14,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Created by Amitash on 4/8/15.
+ * Created by Amitash, Mit on 4/8/15.
  * Works only with files whose values can be read as doubles
  */
 public class MasterShuffleMerge {
@@ -30,7 +30,11 @@ public class MasterShuffleMerge {
     public void mergeAllFiles(ArrayList<String> files, String keyClassname, String valueClassname) throws FileNotFoundException {
 
         int fileSize = files.size();
-        if (fileSize == 1) {
+        if(fileSize == 0){
+            LOGGER.log(Level.WARNING, "No files to preform merge");
+            return;
+        }
+        else if (fileSize == 1) {
             //Code to read the only file and write it's full contents to the output file as is.
             try {
                 FileUtils.copyFile(new File(files.get(0)), new File(OUTPUT_FILE_NAME));
@@ -40,7 +44,7 @@ public class MasterShuffleMerge {
             return;
         }
 
-        if (fileSize == 2) {
+        else if (fileSize == 2) {
             //Code to merge the two files and return the output.
             mergeFiles(files.get(0), files.get(1), OUTPUT_FILE_NAME, keyClassname, valueClassname);
             return;

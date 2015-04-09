@@ -1,4 +1,4 @@
-package neu.mapreduce.api.factory;
+package neu.mapreduce.core.factory;
 
 import api.MyMapperAPI;
 
