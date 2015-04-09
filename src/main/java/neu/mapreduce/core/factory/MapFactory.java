@@ -1,13 +1,13 @@
 package neu.mapreduce.core.factory;
 
-import api.MyMapperAPI;
+import api.MyMapper;
 
 /**
  * Created by mit,srikar,vishal on 4/8/15.
  */
 
 
-public final class MapFactory<T extends MyMapperAPI>{
+public final class MapFactory<T extends MyMapper>{
 
     private Class<T> typeArgumentClass;
     private T singletonObject;
