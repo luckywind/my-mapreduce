@@ -56,11 +56,15 @@ public class Shuffle{
                     keyListOfValue.put(keyvalue[KEY_INDEX], new ArrayList());
                 }
 
+
                 try {
                     keyListOfValue.get(keyvalue[KEY_INDEX]).add(valueFactory.getNewInstance().deserialize(keyvalue[VALUE_INDEX]));
-                } catch (Exception e) {
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (InstantiationException e) {
                     e.printStackTrace();
                 }
+
             }//END OF WHILE
             
             //POST PROCESSING

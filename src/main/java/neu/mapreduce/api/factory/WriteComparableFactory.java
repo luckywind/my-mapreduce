@@ -22,10 +22,11 @@ public final class WriteComparableFactory<T extends MyWriteComparable> {
         return singletonObject;
     }
 
-    public T getNewInstance() throws Exception {
+    public T getNewInstance() throws IllegalAccessException, InstantiationException {
 
         T myNewT = typeArgumentClass.newInstance();
 
         return myNewT;
     }
+
 }

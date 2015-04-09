@@ -13,14 +13,11 @@ public class MasterShuffleMergeTest {
     public static void main(String[] args) throws FileNotFoundException {
         MasterShuffleMerge merger = new MasterShuffleMerge();
         ArrayList<String> files = new ArrayList<String>();
-        files.add("/Users/Amitash/Desktop/my-mapreduce/src/main/java/neu/mapreduce/commons/a");
-        files.add("/Users/Amitash/Desktop/my-mapreduce/src/main/java/neu/mapreduce/commons/b");
-        files.add("/Users/Amitash/Desktop/my-mapreduce/src/main/java/neu/mapreduce/commons/c");
-        files.add("/Users/Amitash/Desktop/my-mapreduce/src/main/java/neu/mapreduce/commons/d");
-        //files.add("d");
-        //files.add("e");
-        //files.add("f");
-        merger.mergeAllFiles(files);
+        files.add("/home/mit/Desktop/input/my-mapreduce/src/main/java/neu/mapreduce/commons/8a");
+        files.add("/home/mit/Desktop/input/my-mapreduce/src/main/java/neu/mapreduce/commons/8b");
+        files.add("/home/mit/Desktop/input/my-mapreduce/src/main/java/neu/mapreduce/commons/8c");
+        files.add("/home/mit/Desktop/input/my-mapreduce/src/main/java/neu/mapreduce/commons/8d");
+        merger.mergeAllFiles(files, "impl.StringWritable", "impl.FloatWritable");
     }
 
 }
