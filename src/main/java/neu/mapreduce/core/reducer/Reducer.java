@@ -52,12 +52,12 @@ public class Reducer {
 
                     ReducerFactory reducerFactory = new ReducerFactory(Class.forName(clientReducerClass));
 
-                    Iterator itertor = getIterator(br, valueFactory);
+                    Iterator iterator = getIterator(br, valueFactory);
 
-                    if (itertor != null) {
+                    if (iterator != null) {
                         (reducerFactory.getSingletonObject()).reduce(
                                 keyFactory.getNewInstance().deserialize(key),
-                                itertor, myContext);
+                                iterator, myContext);
                     } else {
                         LOGGER.log(Level.SEVERE, "Unable to create an iterator");
                     }
@@ -117,7 +117,8 @@ public class Reducer {
         }
         return null;   
     }
-    private static WriteComparableFactory generateWriteComparableFactory(String classname) {
+
+    protected static WriteComparableFactory generateWriteComparableFactory(String classname) {
         Class keyClass = null;
         try {
             keyClass = Class.forName(classname);
