@@ -31,11 +31,12 @@ public class MapRun{
         String clientJarPath = "/home/srikar/Desktop/project-jar/client-1.3-SNAPSHOT-jar-with-dependencies.jar";
         String keyClassName = "impl.StringWritable";
         String valueClassname = "impl.FloatWritable";
+        boolean isCombinerSet = true;
 
-        new MapRun().mapRun(inputFilePath, mapperClassname, outputFilePath, clientJarPath, keyClassName, valueClassname);
+        new MapRun().mapRun(inputFilePath, mapperClassname, outputFilePath, clientJarPath, keyClassName, valueClassname, isCombinerSet);
     }
 
-    public void mapRun(String inputFilePath, String mapperClassname, String outputFilePath, String clientJarPath, String keyOutputClassName, String valueOutputClassname)  {
+    public void mapRun(String inputFilePath, String mapperClassname, String outputFilePath, String clientJarPath, String keyOutputClassName, String valueOutputClassname, boolean isCombinerSet)  {
 
 
 //        //TODO:THESE SHOULD BE INPUT PARAMETER
@@ -115,7 +116,7 @@ public class MapRun{
         LOGGER.log(Level.INFO,"Completed map phase. Starting shuffle.");
 
         /*SHUFFLE*/
-        new Shuffle().shuffle(outputFilePath, SHUFFLE_OUTPUT_PATH, keyOutputClassName, valueOutputClassname, clientJarPath);
+        new Shuffle().shuffle(outputFilePath, SHUFFLE_OUTPUT_PATH, keyOutputClassName, valueOutputClassname, clientJarPath,isCombinerSet);
 
     }
 
