@@ -12,10 +12,7 @@ import java.net.Socket;
 public class ServerListener {
     int port;
     public static ConnectionTypes status;
-    public static ConnectionTypes jobcomplete = ConnectionTypes.BUSY;
-    String initMessage = null;
-    boolean runJob = false;
-
+    public static ConnectionTypes jobcomplete = ConnectionTypes.IDLE;
 
     public ServerListener(int port){
         this.port = port;
@@ -31,12 +28,13 @@ public class ServerListener {
             BufferedReader in = new BufferedReader(
                     new InputStreamReader(socket.getInputStream()));
 
-            while((inputMessage = in.readLine()) == null) {
-                //idle the machine
+            while(true){
+                while((inputMessage = in.readLine()) == null) {
+                    //idle the machine
+                }
+                //Send idle/busy response. Switch case to handle all possible requests.
+                handleRequest(inputMessage, socket);
             }
-
-            //Send idle/busy response. Switch case to handle all possible requests.
-            handleRequest(inputMessage, socket);
         }
     }
 
@@ -46,6 +44,8 @@ public class ServerListener {
             statusRequestHandler(socket);
         } else if(inputMessage.equals("runJob")){
             runJobRequestHandler(socket);
+        } else if(inputMessage.equals("changeStatus")){
+            this.jobcomplete = ConnectionTypes.IDLE;
         }
     }
 
@@ -63,8 +63,15 @@ public class ServerListener {
         }
         InputStream in = sender.getInputStream();
         IOUtils.copy(in, fos);
+        fos = new FileOutputStream("/Users/Amitash/Desktop/my-mapreduce/src/main/java/neu/mapreduce/commons/sockets/inputJar.jar");
+        IOUtils.copy(in, fos);
         fos.close();
         sender.close();
+        listener.close();
+
+        this.jobcomplete = ConnectionTypes.BUSY;
+        //Run the job in new thread here
+        this.jobcomplete = ConnectionTypes.JOB_COMPLETE;
     }
 
     private void statusRequestHandler(Socket socket) throws IOException {
@@ -74,9 +81,11 @@ public class ServerListener {
         }
         else if(this.status == ConnectionTypes.JOB_COMPLETE){
             //handle what happens after job is done.
-            out.println("OutputSent");
-        }
+            out.println("Complete");
+        } else {
             out.println("Busy");
+        }
+
     }
 
 

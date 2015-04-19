@@ -17,18 +17,23 @@ public class MasterSenderTest {
         while(true){
             out.println("status");
             if(in.readLine().equals("Idle")){
+                System.out.println("sending..");
                 out.println("runJob");
-                if(in.readLine().equals("readyForJob")){
-                    Socket fileSender = new Socket("localhost", 6060);
-                    OutputStream os = fileSender.getOutputStream();
-                    InputStream is = new FileInputStream("/Users/Amitash/Desktop/my-mapreduce/src/main/java/neu/mapreduce/commons/sockets/test.txt");
-                    IOUtils.copy(is, os);
-                    fileSender.close();
-                    System.out.println("yay");
-                }
+                in.readLine();
+                //while(!(in.readLine().equals("readyForJob"))) {
+                //}
+                Socket fileSender = new Socket("localhost", 6060);
+                OutputStream os = fileSender.getOutputStream();
+                InputStream is = new FileInputStream("/Users/Amitash/Desktop/my-mapreduce/src/main/java/neu/mapreduce/commons/sockets/test.txt");
+                IOUtils.copy(is, os);
+                fileSender.close();
+                System.out.println("yay");
             }
-
+            break;
         }
 
+        sender.close();
     }
+
 }
+
