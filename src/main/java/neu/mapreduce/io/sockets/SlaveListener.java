@@ -19,7 +19,7 @@ public class SlaveListener {
     public static final int LISTENER_PORT = 6060;
     public final static String REDUCER_FOLER_PATH = "/home/"+MasterScheduler.USER+"/Desktop/reduce";
     public static final int REDUCER_LISTENER_PORT = 6061;
-    private static int shuffleDirCounter;
+    public static int shuffleDirCounter;
     int port;
     public static ConnectionTypes status;
 
@@ -27,6 +27,7 @@ public class SlaveListener {
         this.port = port;
         SlaveListener.status = ConnectionTypes.IDLE;
         new File(REDUCER_FOLER_PATH).mkdir();
+        new Thread(new SlaveToSlaveFileTransferThread()).start();
     }
 
     public void startListening() throws IOException {
@@ -76,17 +77,16 @@ public class SlaveListener {
 
     private void sendShuffleFiles(String inputMessage, Socket masterSocket) throws IOException {
         LOGGER.log(Level.INFO, inputMessage);
-
-
+        //0:SEND_SHUFFLE_FILE 1: dest_ip, 2: dest_port; 3:local_file_loc
+        String[] inputMsgSplit = inputMessage.split(":");
+        IOCommons.sendFile(inputMsgSplit[3], inputMsgSplit[1], SlaveToSlaveFileTransferThread.SLAVE_TO_SLAVE_PORT);
         PrintWriter out = new PrintWriter(masterSocket.getOutputStream(), true);
         out.println(MasterScheduler.FILE_SENT);
     }
 
     private void createShuffleDir() {
         new File(REDUCER_FOLER_PATH + "/" + SlaveListener.shuffleDirCounter).mkdir();
-
         SlaveListener.shuffleDirCounter++;
-
     }
 
     private void initialReduce(Socket masterSocket) throws IOException {
