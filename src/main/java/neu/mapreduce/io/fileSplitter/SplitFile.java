@@ -1,4 +1,4 @@
-package neu.mapreduce.commons.fileSplitter;
+package neu.mapreduce.io.fileSplitter;
 
 import java.io.BufferedReader;
 import java.io.FileOutputStream;

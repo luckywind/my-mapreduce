@@ -1,4 +1,4 @@
-package neu.mapreduce.commons.sockets;
+package neu.mapreduce.io.socketsOld;
 
 import org.apache.commons.io.IOUtils;
 
