@@ -1,21 +1,26 @@
 package neu.mapreduce.io.fileSplitter;
 
-import java.io.BufferedReader;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
+import neu.mapreduce.io.sockets.Constants;
+
+import java.io.*;
+import java.util.ArrayList;
 
 /**
  * Created by Amitash on 3/31/15.
  */
 public class SplitFile {
-    int splitSizeInMB = 64;
+    public static final String PATH_MASTER_FOLDER = Constants.HOME+Constants.USER+Constants.MR_RUN_FOLDER+Constants.MASTER_FOLER;
+    
+    int splitSizeInMB; 
 
     public SplitFile(int splitSizeInMB){
         this.splitSizeInMB = splitSizeInMB;
     }
 
-    public void splitFile(String filePath) throws IOException {
+    public ArrayList<String> splitFile(String filePath) throws IOException {
+        ArrayList<String> fileSplits = new ArrayList<String>();
+        //TODO: Make this a constant location
+        new File(PATH_MASTER_FOLDER).mkdirs();
         BufferedReader br = new BufferedReader(new FileReader(filePath));
         String line;
         //Remember to put a limitation for split size in documentation. int may not be able to represent so much.
@@ -33,7 +38,8 @@ public class SplitFile {
                 index = 0;
                 curSize = 0;
                 //Write the curPartition to file
-                writeByteArrayToFile(curPartition, "part-" + String.valueOf(partCount));
+                writeByteArrayToFile(curPartition, PATH_MASTER_FOLDER + "part-" + String.valueOf(partCount));
+                fileSplits.add(PATH_MASTER_FOLDER + "part-" + String.valueOf(partCount));
                 ////
                 for(int i = 0; i<b.length; i++){
                     curPartition[index] = b[i];
@@ -54,7 +60,9 @@ public class SplitFile {
         for(int i = 0; i<=index; i++){
             finPartition[i] = curPartition[i];
         }
-        writeByteArrayToFile(finPartition, "part-" + String.valueOf(partCount));
+        writeByteArrayToFile(finPartition, PATH_MASTER_FOLDER + "part-" + String.valueOf(partCount));
+        fileSplits.add(PATH_MASTER_FOLDER + "part-" + String.valueOf(partCount));
+        return fileSplits;
     }
 
     public void writeByteArrayToFile(byte[] ba, String fileName) throws IOException {
