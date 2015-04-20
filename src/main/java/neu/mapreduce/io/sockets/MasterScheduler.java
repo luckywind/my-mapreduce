@@ -36,7 +36,7 @@ public class MasterScheduler {
     private String freeSlaveID;
     private String curSplit;
     private HashMap<String, ArrayList<String>> keyFileMapping;
-    public static final String KEY_MAPPING_FILE = "/home/" + Constants.USER + "/Desktop/Master/keyMapping.txt";
+    public static final String KEY_MAPPING_FILE = SlaveListener.SHUFFLE_OUTPUT_FOLDER +"/keyMapping.txt";
 
     public MasterScheduler(ArrayList<String> fileSplits, String inputJar, HashMap<String, Socket> slaves, String jobConfClassName) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException, MalformedURLException, ClassNotFoundException {
         this.fileSplits = fileSplits;
@@ -166,7 +166,7 @@ public class MasterScheduler {
             }
         }
 
-        reducerOut.println(Message.RUN_REDUCE);
+        reducerOut.println(Message.RUN_REDUCE+":"+jobConfClassName);
 
 
     }
