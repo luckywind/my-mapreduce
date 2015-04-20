@@ -17,7 +17,7 @@ public class SlaveListener {
     private static final Logger LOGGER = Logger.getLogger(SlaveListener.class.getName());
 
     public static final int LISTENER_PORT = 6060;
-    public final static String REDUCER_FOLER_PATH = "/home/"+MasterScheduler.USER+"/Desktop/reduce";
+    public final static String REDUCER_FOLDER_PATH = "/home/"+MasterScheduler.USER+"/Desktop/reduce";
     public static final int REDUCER_LISTENER_PORT = 6061;
     public static int shuffleDirCounter;
     int port;
@@ -26,7 +26,7 @@ public class SlaveListener {
     public SlaveListener(int port) {
         this.port = port;
         SlaveListener.status = ConnectionTypes.IDLE;
-        new File(REDUCER_FOLER_PATH).mkdir();
+        new File(REDUCER_FOLDER_PATH).mkdir();
         new Thread(new SlaveToSlaveFileTransferThread()).start();
     }
 
@@ -71,7 +71,7 @@ public class SlaveListener {
     }
 
     private void runReduce() {
-        SlaveListener.status = ConnectionTypes.JOB_COMPLETE;
+        new Thread(new SlaveReduceRunThread()).start();
 
     }
 
@@ -85,14 +85,14 @@ public class SlaveListener {
     }
 
     private void createShuffleDir() {
-        new File(REDUCER_FOLER_PATH + "/" + SlaveListener.shuffleDirCounter).mkdir();
+        new File(REDUCER_FOLDER_PATH + "/" + SlaveListener.shuffleDirCounter).mkdir();
         SlaveListener.shuffleDirCounter++;
     }
 
     private void initialReduce(Socket masterSocket) throws IOException {
         
         ServerSocket listener = new ServerSocket(REDUCER_LISTENER_PORT);
-        receiveFile(listener, REDUCER_FOLER_PATH+"/client.jar");
+        receiveFile(listener, REDUCER_FOLDER_PATH +"/client.jar");
         PrintWriter out = new PrintWriter(masterSocket.getOutputStream(), true);
         out.println(MasterScheduler.JAR_RECEIVED);
         //CLOSE AFTER ALL JAR AND SHUFFLE FILES ARE RECEIVED
@@ -195,7 +195,11 @@ public class SlaveListener {
 
 
     public static void main(String[] args) throws IOException {
-        SlaveListener listener = new SlaveListener(8087);
+        if(args.length != 1) {
+            System.out.println("Pass port number ");
+            System.exit(1);
+        }
+        SlaveListener listener = new SlaveListener(Integer.parseInt(args[0]));
         listener.startListening();
     }
 }

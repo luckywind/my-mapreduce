@@ -5,6 +5,9 @@ import neu.mapreduce.core.factory.ReducerFactory;
 import neu.mapreduce.core.factory.WriteComparableFactory;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -33,16 +36,21 @@ public class Reducer {
         String keyClassType = "impl.StringWritable";
         String valueClassType = "impl.FloatWritable";
         String clientReducerClass = "mapperImpl.AirlineReducer";
-        
+
+        //reduceRun(outputFilePath, listOfAllSortedFile, keyClassType, valueClassType, clientReducerClass);
+
+    }
+
+    public void reduceRun(String outputFilePath, List<String> listOfAllSortedInputFile, String keyClassType, String valueClassType, String clientReducerClass) {
         WriteComparableFactory keyFactory = generateWriteComparableFactory(keyClassType);
         WriteComparableFactory valueFactory = generateWriteComparableFactory(valueClassType);
-
+        String clientJarPath = "/home/srikar/Desktop/project-jar/client-1.3-SNAPSHOT-jar-with-dependencies.jar";
         BufferedWriter bw = null;
         BufferedReader br = null;
         try {
 
             bw = new BufferedWriter(new FileWriter(new File(outputFilePath)));
-            for (String filelocationofSort : listOfAllSortedFile) {
+            for (String filelocationofSort : listOfAllSortedInputFile) {
                 try {
 
                     br = new BufferedReader(new FileReader(filelocationofSort));
@@ -50,7 +58,10 @@ public class Reducer {
                     MyContext myContext = new MyContext(bw);
                     String key = br.readLine();
 
-                    ReducerFactory reducerFactory = new ReducerFactory(Class.forName(clientReducerClass));
+                    File aFile = new File(clientJarPath);
+//                    URLClassLoader urlClassLoader = new URLClassLoader(new URL[]{aFile.toURI().toURL()});
+
+                    ReducerFactory reducerFactory = new ReducerFactory(clientJarPath, clientReducerClass);
 
                     Iterator iterator = getIterator(br, valueFactory);
 
@@ -61,6 +72,10 @@ public class Reducer {
                     } else {
                         LOGGER.log(Level.SEVERE, "Unable to create an iterator");
                     }
+                } catch (NoSuchMethodException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
                 } finally {
                     if(br !=null){
                         try {
@@ -91,9 +106,8 @@ public class Reducer {
                     e.printStackTrace();
                 }
             }
-            
-        }
 
+        }
     }
 
     private static Iterator getIterator(BufferedReader br, WriteComparableFactory writeComparableFactory) {

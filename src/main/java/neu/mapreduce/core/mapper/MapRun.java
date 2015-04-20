@@ -51,7 +51,7 @@ public class MapRun{
 
         try {
             File aFile = new File(clientJarPath);
-            URLClassLoader urlClassLoader = new URLClassLoader(new URL[]{aFile.toURI().toURL()});
+//            URLClassLoader urlClassLoader = new URLClassLoader(new URL[]{aFile.toURI().toURL()});
 
 //            Class clientClass = Class.forName(mapperClassname);
             MapFactory mapFactory = new MapFactory(clientJarPath, mapperClassname);

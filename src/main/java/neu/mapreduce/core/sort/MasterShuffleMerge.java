@@ -10,24 +10,33 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * Created by Amitash, Mit on 4/8/15.
- * Works only with files whose values can be read as doubles
  */
 public class MasterShuffleMerge {
     private final static Logger LOGGER = Logger.getLogger(MasterShuffleMerge.class.getName());
 
-    String OUTPUT_FILE_NAME = "shuffleMerge";
+    public static String OUTPUT_FILE_NAME = "shuffleMerge";
     int fileId;
 
     public MasterShuffleMerge() {
         this.fileId = 0;
     }
 
-    public void mergeAllFiles(ArrayList<String> files, String keyClassname, String valueClassname) throws FileNotFoundException {
+    public void mergeAllFileInDir(String inputDir, String keyClassname, String valueClassname) throws FileNotFoundException {
+        String outputFilePath = inputDir + "/" + OUTPUT_FILE_NAME;
+        File folder = new File(inputDir);
+        if(folder.isDirectory()){
+            File[] filesList = folder.listFiles();
+            mergeAllFiles(new ArrayList<>(Arrays.asList(filesList)), keyClassname, valueClassname, outputFilePath);
+        }
+    }
+
+    public void mergeAllFiles(ArrayList<File> files, String keyClassname, String valueClassname, String outputFilePath) throws FileNotFoundException {
 
         int fileSize = files.size();
         if(fileSize == 0){
@@ -37,7 +46,7 @@ public class MasterShuffleMerge {
         else if (fileSize == 1) {
             //Code to read the only file and write it's full contents to the output file as is.
             try {
-                FileUtils.copyFile(new File(files.get(0)), new File(OUTPUT_FILE_NAME));
+                FileUtils.copyFile(files.get(0), new File(outputFilePath));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -46,7 +55,7 @@ public class MasterShuffleMerge {
 
         else if (fileSize == 2) {
             //Code to merge the two files and return the output.
-            mergeFiles(files.get(0), files.get(1), OUTPUT_FILE_NAME, keyClassname, valueClassname);
+            mergeFiles(files.get(0), files.get(1), outputFilePath, keyClassname, valueClassname);
             return;
         }
 
@@ -59,13 +68,13 @@ public class MasterShuffleMerge {
         files.remove(0);
 
         //Append outputfile to the filePointers
-        files.add(Integer.toString(fileId));
+        files.add(new File(Integer.toString(fileId)));
 
         //Recursively call mergeAllFiles with the new list.
-        mergeAllFiles(files, keyClassname, valueClassname);
+        mergeAllFiles(files, keyClassname, valueClassname, outputFilePath);
     }
 
-    public void mergeFiles(String file1, String file2, String outputFile, String keyClassname, String valueClassname) throws FileNotFoundException {
+    public void mergeFiles(File file1, File file2, String outputFile, String keyClassname, String valueClassname) throws FileNotFoundException {
         BufferedReader br1 = new BufferedReader(new FileReader(file1));
         BufferedReader br2 = new BufferedReader(new FileReader(file2));
         PrintWriter writer = new PrintWriter(outputFile);

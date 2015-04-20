@@ -28,7 +28,7 @@ public class SlaveToSlaveFileTransferThread implements Runnable {
                 Socket sender = serverSocket.accept();
                 InputStream in = sender.getInputStream();
                 int shuffleDirCounter = SlaveListener.shuffleDirCounter-1;
-                FileOutputStream fos = new FileOutputStream(SlaveListener.REDUCER_FOLER_PATH + "/" + shuffleDirCounter +"/"+fileCounter);
+                FileOutputStream fos = new FileOutputStream(SlaveListener.REDUCER_FOLDER_PATH + "/" + shuffleDirCounter +"/"+fileCounter);
                 IOUtils.copy(in, fos);
                 fos.close();
                 in.close();
