@@ -13,17 +13,43 @@ import java.net.URLClassLoader;
  * Created by srikar on 4/18/15.
  */
 
+/**
+ * Factory which creates {@link api.MyCombiner} subclass instances at runtime. It creates
+ * instance only once and returns same instance if called again.
+ *
+ * @param <T> creates instances of class T which extends {@link api.MyCombiner}
+ */
+
 public class CombinerFactory<T extends MyCombiner> {
 
     private Class<T> typeArgumentClass;
     private T singletonObject;
 
+    /**
+     * Constructor which creates instance using class object
+     *
+     * @param typeArgumentClass Class whose instance need to be created
+     * @throws IllegalAccessException
+     * @throws InstantiationException
+     */
     public CombinerFactory(Class<T> typeArgumentClass) throws IllegalAccessException, InstantiationException {
-
         this.typeArgumentClass = typeArgumentClass;
         singletonObject = typeArgumentClass.newInstance();
     }
 
+    /**
+     * Constructor which creates instance of the given combinerClassname which is loaded from the
+     * clientJar at runtime using {@link java.net.URLClassLoader}
+     *
+     * @param clientJarPath     client jar path which has client code
+     * @param combinerClassName name of the class whose instance need to be created
+     * @throws MalformedURLException
+     * @throws ClassNotFoundException
+     * @throws NoSuchMethodException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     * @throws InstantiationException
+     */
     public CombinerFactory(String clientJarPath, String combinerClassName) throws MalformedURLException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
 
         File aFile = new File(clientJarPath);
@@ -34,13 +60,22 @@ public class CombinerFactory<T extends MyCombiner> {
         Constructor<? extends MyCombiner> clientConstructor = clientCombinerClass.getConstructor();
         MyCombiner myCombiner = clientConstructor.newInstance();
         singletonObject = (T) myCombiner;
-
     }
 
+    /**
+     * @return singleton object
+     */
     public T getSingletonObject() {
         return singletonObject;
     }
 
+    /**
+     * Creates new instance of the given class
+     *
+     * @return a new instance of given class
+     * @throws IllegalAccessException
+     * @throws InstantiationException
+     */
     public T getNewInstance() throws IllegalAccessException, InstantiationException {
         T myNewT = typeArgumentClass.newInstance();
         return myNewT;
