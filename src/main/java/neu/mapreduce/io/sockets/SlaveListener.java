@@ -7,6 +7,7 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.logging.Level;
@@ -20,13 +21,14 @@ public class SlaveListener {
 
     public static final int LISTENER_PORT = 6060;
     public final static String REDUCER_FOLDER_PATH = "/home/" + Constants.USER + Constants.MR_RUN_FOLDER + Constants.REDUCE_FOLDER;
+    public static final String REDUCER_CLIENT_JAR_PATH = REDUCER_FOLDER_PATH + "/red-client-jar-with-dependencies.jar";
     public static final String MAPPER_FOLDER_PATH = "/home/" + Constants.USER + Constants.MR_RUN_FOLDER + Constants.MAP_FOLDER;
     public static final int REDUCER_LISTENER_PORT = 6061;
     public static int shuffleDirCounter;
     public int port;
     public static ConnectionTypes status;
     public static final String INPUT_CHUNK = MAPPER_FOLDER_PATH + "/input_chunk.txt";
-    public static final String CLIENT_JAR_PATH = MAPPER_FOLDER_PATH + "/client-jar-with-dependencies.jar";
+    public static final String MAPPER_CLIENT_JAR_PATH = MAPPER_FOLDER_PATH + "/map-client-jar-with-dependencies.jar";
     public static final String MAP_OUTPUT_FILE_PATH = MAPPER_FOLDER_PATH + "/map_op_shuffle_ip.txt";
     public static final String SHUFFLE_OUTPUT_FOLDER = MAPPER_FOLDER_PATH + "/shuffle";
 
@@ -62,10 +64,10 @@ public class SlaveListener {
     private void handleRequest(String inputMessage, Socket socket) throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
         if (inputMessage.equals(Message.STATUS)) {
             statusRequestHandler(socket);
-        } else if (inputMessage.startsWith(Message.RUN_JOB)) {
-            runJobRequestHandler(socket, getJobConfigClassname(inputMessage));
         } else if (inputMessage.equals(Message.CHANGE_STATUS)) {
             SlaveListener.status = ConnectionTypes.IDLE;
+        } else if (inputMessage.startsWith(Message.RUN_JOB)) {
+            runMapJobRequestHandler(socket, getJobConfigClassname(inputMessage));
         } else if (inputMessage.equals(Message.SEND_KEY_MAPPING_FILE_MESSAGE)) {
             sendKeyMappingFile();
         } else if (inputMessage.equals(Message.INITIAL_REDUCE)) {
@@ -74,8 +76,8 @@ public class SlaveListener {
             createShuffleDir();
         } else if (inputMessage.startsWith(Message.SEND_SHUFFLE_FILE)) {
             sendShuffleFiles(inputMessage, socket);
-        } else if (inputMessage.equals(Message.RUN_REDUCE)) {
-            runReduce();
+        } else if (inputMessage.startsWith(Message.RUN_REDUCE)) {
+            runReduce(getJobConfigClassname(inputMessage));
         }
     }
 
@@ -89,8 +91,9 @@ public class SlaveListener {
         return null;
     }
 
-    private void runReduce() {
-        new Thread(new SlaveReduceRunThread()).start();
+    private void runReduce(String jobConfigClassname) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException, MalformedURLException, ClassNotFoundException {
+        
+        new Thread(new SlaveReduceRunThread(REDUCER_CLIENT_JAR_PATH, getJobConf(REDUCER_CLIENT_JAR_PATH, jobConfigClassname))).start();
 
     }
 
@@ -111,7 +114,7 @@ public class SlaveListener {
     private void initialReduce(Socket masterSocket) throws IOException {
 
         ServerSocket listener = new ServerSocket(REDUCER_LISTENER_PORT);
-        receiveFile(listener, REDUCER_FOLDER_PATH + "/client.jar");
+        receiveFile(listener, REDUCER_CLIENT_JAR_PATH);
         PrintWriter out = new PrintWriter(masterSocket.getOutputStream(), true);
         out.println(Message.JAR_RECEIVED);
         //CLOSE AFTER ALL JAR AND SHUFFLE FILES ARE RECEIVED
@@ -144,7 +147,7 @@ public class SlaveListener {
 
     }
 
-    private void runJobRequestHandler(Socket socket, String jobConfClassName) throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    private void runMapJobRequestHandler(Socket socket, String jobConfClassName) throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
 
         FileOutputStream fos = null, fos2 = null;
         ServerSocket listener = new ServerSocket(LISTENER_PORT);
@@ -162,15 +165,14 @@ public class SlaveListener {
             sender.close();
             Socket sender2 = listener.accept();
             in = sender2.getInputStream();
-            fos = new FileOutputStream(CLIENT_JAR_PATH);
+            fos = new FileOutputStream(MAPPER_CLIENT_JAR_PATH);
             IOUtils.copy(in, fos);
             fos.close();
             in.close();
             sender2.close();
             listener.close();
           //  String jobConfClassName = "mapperImpl.AirlineJobConf";
-            JobConfFactory jobConfFactory = new JobConfFactory(CLIENT_JAR_PATH, jobConfClassName);
-            JobConf jobConf = jobConfFactory.getSingletonObject();
+            JobConf jobConf = getJobConf(MAPPER_CLIENT_JAR_PATH, jobConfClassName);
 
             SlaveListener.status = ConnectionTypes.BUSY;
             //Run the job in new thread here
@@ -187,13 +189,18 @@ public class SlaveListener {
                     INPUT_CHUNK,
                     MAP_OUTPUT_FILE_PATH,
                     SHUFFLE_OUTPUT_FOLDER,
-                    CLIENT_JAR_PATH,
+                    MAPPER_CLIENT_JAR_PATH,
                     jobConf))
                     .start();
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+    }
+
+    private JobConf getJobConf(String clientJarPath, String jobConfClassName) throws java.net.MalformedURLException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+        JobConfFactory jobConfFactory = new JobConfFactory(clientJarPath, jobConfClassName);
+        return jobConfFactory.getSingletonObject();
     }
 
 

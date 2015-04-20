@@ -6,8 +6,11 @@ package neu.mapreduce.io.sockets;
 public interface Constants {
 
 
-    public static final String MR_RUN_FOLDER = "/Desktop/MR_Run/";
-    public static final String USER = "srikar";
+    public static final String MR_RUN_FOLDER = "/Desktop/MR_Run";
+    public static final String CLIENT_FOLDER = "/Desktop/MR_Client";
+
+    public static final String USER = "mit";
     public static final String REDUCE_FOLDER = "/reduce";
     public static final String MAP_FOLDER = "/map";
+
 }
