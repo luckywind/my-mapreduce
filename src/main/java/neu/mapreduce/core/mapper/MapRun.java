@@ -19,7 +19,7 @@ import java.util.logging.Logger;
 public class MapRun{
 
     private final static Logger LOGGER = Logger.getLogger(MapRun.class.getName());
-    private final static String SHUFFLE_OUTPUT_PATH = "/home/srikar/Desktop/shuffle";
+    public final static String SHUFFLE_OUTPUT_PATH = "/home/srikar/Desktop/shuffle";
 
     public static void main(String [] args){
 
@@ -31,7 +31,7 @@ public class MapRun{
         String clientJarPath = "/home/srikar/Desktop/project-jar/client-1.3-SNAPSHOT-jar-with-dependencies.jar";
         String keyClassName = "impl.StringWritable";
         String valueClassname = "impl.FloatWritable";
-        boolean isCombinerSet = true;
+        boolean isCombinerSet = false;
 
         new MapRun().mapRun(inputFilePath, mapperClassname, outputFilePath, clientJarPath, keyClassName, valueClassname, isCombinerSet);
     }
@@ -117,6 +117,7 @@ public class MapRun{
 
         /*SHUFFLE*/
         new Shuffle().shuffle(outputFilePath, SHUFFLE_OUTPUT_PATH, keyOutputClassName, valueOutputClassname, clientJarPath,isCombinerSet);
+        LOGGER.log(Level.INFO,"Completed shuffle phase.");
 
     }
 

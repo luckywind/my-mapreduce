@@ -19,10 +19,10 @@ import java.util.logging.Logger;
  */
 public class Shuffle {
     private final static Logger LOGGER = Logger.getLogger(Shuffle.class.getName());
-    private final static String INPUT_FILE_KEYVALUE_SEPARATOR = "\t";
-    private final static String OUTPUT_SHUFFLE_FILE_VALUE_SEPARATOR = "\t";
+    public final static String INPUT_FILE_KEYVALUE_SEPARATOR = "\t";
+    public final static String OUTPUT_SHUFFLE_FILE_VALUE_SEPARATOR = "\t";
     private final static String OUTPUT_SHUFFLE_FILE_LINE_SEPARATOR = "\n";
-    private final static String KEY_FILENAME_MAPPING = "keyfilemapping";
+    public final static String KEY_FILENAME_MAPPING = "keyfilemapping";
     private final static int KEY_INDEX = 0;
     private final static int VALUE_INDEX = 1;
 
