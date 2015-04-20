@@ -25,10 +25,10 @@ public class Reducer {
 
     private final static Logger LOGGER = Logger.getLogger(Reducer.class.getName());
 
-    public static void main(String args[]) {
+    /*public static void main(String args[]) {
         String outputFilePath = "/home/mit/Desktop/input/my-mapreduce/op-reducer";
         
-        String filelocationofSort1 = "/home/mit/Desktop/input/my-mapreduce/shuffleMerge";
+        String filelocationofSort1 = "/home/mit/Desktop/input/my-mapreduce/shuffleMerge1";
         List<String> listOfAllSortedFile =  new ArrayList<String>();
         listOfAllSortedFile.add(filelocationofSort1);
         listOfAllSortedFile.add(filelocationofSort1);
@@ -39,12 +39,12 @@ public class Reducer {
 
         //reduceRun(outputFilePath, listOfAllSortedFile, keyClassType, valueClassType, clientReducerClass);
 
-    }
+    }*/
 
-    public void reduceRun(String outputFilePath, List<String> listOfAllSortedInputFile, String keyClassType, String valueClassType, String clientReducerClass) {
+    public void reduceRun(String outputFilePath, List<String> listOfAllSortedInputFile, String keyClassType, String valueClassType, String clientReducerClass,String clientJarPath) {
         WriteComparableFactory keyFactory = generateWriteComparableFactory(keyClassType);
         WriteComparableFactory valueFactory = generateWriteComparableFactory(valueClassType);
-        String clientJarPath = "/home/srikar/Desktop/project-jar/client-1.3-SNAPSHOT-jar-with-dependencies.jar";
+        //String clientJarPath = "/home/srikar/Desktop/project-jar/client-1.3-SNAPSHOT-jar-with-dependencies.jar";
         BufferedWriter bw = null;
         BufferedReader br = null;
         try {
@@ -58,7 +58,7 @@ public class Reducer {
                     MyContext myContext = new MyContext(bw);
                     String key = br.readLine();
 
-                    File aFile = new File(clientJarPath);
+//                    File aFile = new File(clientJarPath);
 //                    URLClassLoader urlClassLoader = new URLClassLoader(new URL[]{aFile.toURI().toURL()});
 
                     ReducerFactory reducerFactory = new ReducerFactory(clientJarPath, clientReducerClass);
