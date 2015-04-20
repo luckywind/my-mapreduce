@@ -20,9 +20,9 @@ public class SlaveListener {
     private static final Logger LOGGER = Logger.getLogger(SlaveListener.class.getName());
 
     public static final int LISTENER_PORT = 6060;
-    public final static String REDUCER_FOLDER_PATH = "/home/" + Constants.USER + Constants.MR_RUN_FOLDER + Constants.REDUCE_FOLDER;
+    public final static String REDUCER_FOLDER_PATH = Constants.HOME + Constants.USER + Constants.MR_RUN_FOLDER + Constants.REDUCE_FOLDER;
     public static final String REDUCER_CLIENT_JAR_PATH = REDUCER_FOLDER_PATH + "/red-client-jar-with-dependencies.jar";
-    public static final String MAPPER_FOLDER_PATH = "/home/" + Constants.USER + Constants.MR_RUN_FOLDER + Constants.MAP_FOLDER;
+    public static final String MAPPER_FOLDER_PATH = Constants.HOME + Constants.USER + Constants.MR_RUN_FOLDER + Constants.MAP_FOLDER;
     public static final int REDUCER_LISTENER_PORT = 6061;
     public static int shuffleDirCounter;
     public int port;

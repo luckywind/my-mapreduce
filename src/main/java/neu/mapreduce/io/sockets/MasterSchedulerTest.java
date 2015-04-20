@@ -13,9 +13,9 @@ public class MasterSchedulerTest {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 
-        String inputFile = "/home/" + Constants.USER + Constants.CLIENT_FOLDER + "/inputData.txt";
+        String inputFile = Constants.HOME + Constants.USER + Constants.CLIENT_FOLDER + "/inputData.txt";
         String CLIENT_JAR_WITH_DEPENDENCIES_JAR = "/client-1.4-SNAPSHOT-jar-with-dependencies.jar";
-        String inputJar = "/home/" + Constants.USER + Constants.CLIENT_FOLDER + CLIENT_JAR_WITH_DEPENDENCIES_JAR;
+        String inputJar =  Constants.HOME + Constants.USER + Constants.CLIENT_FOLDER + CLIENT_JAR_WITH_DEPENDENCIES_JAR;
 
         String jobConfClassName = "mapperImpl.AirlineJobConf";
 
