@@ -1,5 +1,6 @@
 package neu.mapreduce.io.sockets;
 
+import api.JobConf;
 import neu.mapreduce.core.mapper.MapRun;
 
 /**
@@ -8,28 +9,23 @@ import neu.mapreduce.core.mapper.MapRun;
 public class SlaveMapRunThread implements Runnable{
 
     private String inputFilePath;
-    private String mapperClassname;
-    private String outputFilePath;
+    private String mapOutputFilePath;
+    private String shuffleOutputFolder;
     private String clientJarPath;
-    private String keyClassName;
-    private String valueClassname;
-    private boolean isCombinerSet;
+    private JobConf jobConf;
 
-    public SlaveMapRunThread(String inputFilePath, String mapperClassname, String outputFilePath, String clientJarPath, String keyClassName, String valueClassname, boolean isCombinerSet) {
+    public SlaveMapRunThread(String inputFilePath, String mapOutputFilePath, String shuffleOutputFolder, String clientJarPath, JobConf jobConf) {
         this.inputFilePath = inputFilePath;
-        this.mapperClassname = mapperClassname;
-        this.outputFilePath = outputFilePath;
+        this.mapOutputFilePath = mapOutputFilePath;
         this.clientJarPath = clientJarPath;
-        this.keyClassName = keyClassName;
-        this.valueClassname = valueClassname;
-        this.isCombinerSet = isCombinerSet;
+        this.shuffleOutputFolder = shuffleOutputFolder;
+        this.jobConf = jobConf;
     }
-
 
     @Override
     public void run() {
         // run maprun
-        new MapRun().mapRun(inputFilePath, mapperClassname, outputFilePath, clientJarPath, keyClassName, valueClassname, isCombinerSet);
+        new MapRun().mapRun(inputFilePath, mapOutputFilePath, shuffleOutputFolder, clientJarPath, jobConf.getMapperClassName(), jobConf.getMapKeyInputClassName(), jobConf.getMapValueInputClassName(), jobConf.getMapKeyOutputClassName(), jobConf.getMapValueOutputClassName(), jobConf.isIsCombinerSet());
         SlaveListener.status = ConnectionTypes.JOB_COMPLETE;
     }
 }
