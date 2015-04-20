@@ -9,10 +9,8 @@
   <url>http://maven.apache.org</url>
 
   <properties>
-    <api-version>1.7-SNAPSHOT</api-version>
+    <api-version>1.8-SNAPSHOT</api-version>
     <jdk.version>1.7</jdk.version>
-    <client-version>1.3-SNAPSHOT</client-version>
-    <client-jar-location>/home/srikar/Documents/MyHadoop/my-mapreduce-client/target/client-${client-version}-jar-with-dependencies.jar</client-jar-location>
   </properties>
 
 
@@ -29,15 +27,6 @@
       <artifactId>my-mapreduce-api</artifactId>
       <version>${api-version}</version>
     </dependency>
-
-    <!--<dependency>-->
-      <!--<groupId>my-mapreduce-client</groupId>-->
-      <!--<artifactId>client</artifactId>-->
-      <!--<version>${client-version}</version>-->
-      <!--<scope>system</scope>-->
-      <!--<systemPath>${client-jar-location}</systemPath>-->
-    <!--</dependency>-->
-
   </dependencies>
 
   <build>

@@ -1,9 +1,13 @@
 package neu.mapreduce.io.sockets;
 
+import api.JobConf;
+import neu.mapreduce.core.factory.JobConfFactory;
 import neu.mapreduce.core.shuffle.Shuffle;
 import org.apache.commons.io.IOUtils;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -18,32 +22,31 @@ import java.util.logging.Logger;
 public class MasterScheduler {
 
     private static final Logger LOGGER = Logger.getLogger(MasterScheduler.class.getName());
-    private static final Integer NUM_REDUCERS = 1;
-    public static final String SEND_KEY_MAPPING_FILE_MESSAGE = "sendKeyMappingFile";
-    public static final String masterIP = "127.0.0.1";
-    public static final String RUN_REDUCE = "runReduce";
-    public static final String INITIAL_GET_KEY_SHUFFLE = "sendShuffleFiles";
-    public static final String SEND_SHUFFLE_FILE = "sendShuffleFile";
-    public static final String FILE_SENT = "fileSent";
-    public static final String JAR_RECEIVED = "jarReceived";
-    public static final String INITIAL_REDUCE = "initialReduce";
+   // private static final Integer NUM_REDUCERS = 1;
+   public static final String masterIP = "127.0.0.1";
+
+
     private ArrayList<String> fileSplits;
     private String inputJar;
     private HashMap<String, Socket> slaves;
     private Job job;
+    private JobConf jobConf;
+    private String jobConfClassName;
     //freeSlaveID is a string in the format: ip:port. eg: 192.168.1.1:8087
     private String freeSlaveID;
     private String curSplit;
-    public static final String USER = "srikar";
     private HashMap<String, ArrayList<String>> keyFileMapping;
-    public static final String KEY_MAPPING_FILE = "/home/" + USER + "/Desktop/Master/keyMapping.txt";
+    public static final String KEY_MAPPING_FILE = "/home/" + Constants.USER + "/Desktop/Master/keyMapping.txt";
 
-    public MasterScheduler(ArrayList<String> fileSplits, String inputJar, HashMap<String, Socket> slaves) {
+    public MasterScheduler(ArrayList<String> fileSplits, String inputJar, HashMap<String, Socket> slaves, String jobConfClassName) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException, MalformedURLException, ClassNotFoundException {
         this.fileSplits = fileSplits;
         this.inputJar = inputJar;
         this.slaves = slaves;
         this.job = new Job();
         this.keyFileMapping = new HashMap<>();
+        this.jobConfClassName = jobConfClassName;
+        JobConfFactory jobConfFactory = new JobConfFactory(this.inputJar, jobConfClassName);
+        this.jobConf = jobConfFactory.getSingletonObject();
     }
 
     public void schedule() throws IOException {
@@ -71,7 +74,7 @@ public class MasterScheduler {
         for (String slaveID : this.job.getMapperSlaveID()) {
             Socket slaveSocket = slaves.get(slaveID);
             PrintWriter out = new PrintWriter(slaveSocket.getOutputStream(), true);
-            out.println(SEND_KEY_MAPPING_FILE_MESSAGE);
+            out.println(Message.SEND_KEY_MAPPING_FILE_MESSAGE);
             ServerSocket listener = new ServerSocket(SlaveListener.LISTENER_PORT);
             Socket listenerSocket = listener.accept();
 
@@ -87,7 +90,7 @@ public class MasterScheduler {
         }
     }
 
-    private void updateKeyMappingHashMap(String slaveID) throws FileNotFoundException, IOException {
+    private void updateKeyMappingHashMap(String slaveID) throws IOException {
         BufferedReader bufferedReader = new BufferedReader(new FileReader(KEY_MAPPING_FILE));
         String line;
         while ((line = bufferedReader.readLine()) != null) {
@@ -100,7 +103,7 @@ public class MasterScheduler {
             keyFileMapping.get(splitLine[0]).add(slaveID + ":" + splitLine[1]);
         }
 
-        ArrayList<HashMap<String, ArrayList<String>>> listSmallerHashmaps = splitKeyMapping(this.keyFileMapping, MasterScheduler.NUM_REDUCERS);
+        ArrayList<HashMap<String, ArrayList<String>>> listSmallerHashmaps = splitKeyMapping(this.keyFileMapping, this.jobConf.getNumReducers());
         scheduleReducer(listSmallerHashmaps);
     }
 
@@ -140,30 +143,30 @@ public class MasterScheduler {
         PrintWriter reducerOut = new PrintWriter(messageSocket.getOutputStream(), true);
         BufferedReader reducerIn = new BufferedReader(
                 new InputStreamReader(messageSocket.getInputStream()));
-        reducerOut.println(INITIAL_REDUCE);
+        reducerOut.println(Message.INITIAL_REDUCE);
         sendFile(this.inputJar, getIp(this.freeSlaveID), SlaveListener.REDUCER_LISTENER_PORT);
-        while(!reducerIn.readLine().equals(MasterScheduler.JAR_RECEIVED)){
+        while(!reducerIn.readLine().equals(Message.JAR_RECEIVED)){
 
         }
         LOGGER.log(Level.INFO, "Jar sent to reducer");
         for (String key : keyShuffleFileInfoMapping.keySet()) {
             //Slave should open a socket and wait for files. It should create a dir for each key
-            reducerOut.println(INITIAL_GET_KEY_SHUFFLE);
+            reducerOut.println(Message.INITIAL_GET_KEY_SHUFFLE);
             for (String fileLoc : keyShuffleFileInfoMapping.get(key)) {
                 String destId = getDestId(fileLoc);
                 Socket shuffleSocket = slaves.get(destId);
                 PrintWriter shuffleOut = new PrintWriter(shuffleSocket.getOutputStream(), true);
                 BufferedReader shuffleIn = new BufferedReader(
                         new InputStreamReader(shuffleSocket.getInputStream()));
-                shuffleOut.println(MasterScheduler.SEND_SHUFFLE_FILE + ":" + this.freeSlaveID + ":" + fileLoc.split(":")[2]);
-                while(!shuffleIn.readLine().equals(FILE_SENT)){
+                shuffleOut.println(Message.SEND_SHUFFLE_FILE + ":" + this.freeSlaveID + ":" + fileLoc.split(":")[2]);
+                while(!shuffleIn.readLine().equals(Message.FILE_SENT)){
 
                 }
                 LOGGER.log(Level.INFO, "File sent. File details: " + fileLoc);
             }
         }
 
-        reducerOut.println(RUN_REDUCE);
+        reducerOut.println(Message.RUN_REDUCE);
 
 
     }
@@ -198,13 +201,13 @@ public class MasterScheduler {
             PrintWriter out = new PrintWriter(slaveSocket.getOutputStream(), true);
             BufferedReader in = new BufferedReader(
                     new InputStreamReader(slaveSocket.getInputStream()));
-            out.println("status");
+            out.println(Message.STATUS);
             status = in.readLine();
             if (!(status.equals("Complete"))) {
                 return false;
             } else {
                 //Handle what to do with successful mappers and the data file locations.
-                out.println("changeStatus");
+                out.println(Message.CHANGE_STATUS);
             }
         }
         return true;
@@ -227,7 +230,7 @@ public class MasterScheduler {
         PrintWriter out = new PrintWriter(slaveSocket.getOutputStream(), true);
         BufferedReader in = new BufferedReader(
                 new InputStreamReader(slaveSocket.getInputStream()));
-        out.println("runJob");
+        out.println(Message.RUN_JOB +":"+this.jobConfClassName);
         in.readLine();
         //while(!(in.readLine().equals("readyForJob"))) {
         //}
@@ -259,7 +262,7 @@ public class MasterScheduler {
             PrintWriter out = new PrintWriter(slaveSocket.getOutputStream(), true);
             BufferedReader in = new BufferedReader(
                     new InputStreamReader(slaveSocket.getInputStream()));
-            out.println("status");
+            out.println(Message.STATUS);
             if (in.readLine().equals("Idle")) {
                 this.freeSlaveID = slaveID;
                 return true;
