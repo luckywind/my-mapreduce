@@ -109,6 +109,7 @@ public class SlaveListener {
     }
 
     private void runReduce(String jobConfigClassname) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException, MalformedURLException, ClassNotFoundException {
+        SlaveListener.status = ConnectionTypes.BUSY;
         new Thread(new SlaveReduceRunThread(REDUCER_CLIENT_JAR_PATH, getJobConf(REDUCER_CLIENT_JAR_PATH, jobConfigClassname))).start();
     }
 

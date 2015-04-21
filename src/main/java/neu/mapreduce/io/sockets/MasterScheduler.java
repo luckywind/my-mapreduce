@@ -121,7 +121,7 @@ public class MasterScheduler {
             //Do the mapper phase
             if (!(listSmallerHashmaps.isEmpty())) {
                 //Allocate task
-                allocateReduceTask(listSmallerHashmaps.remove(0));
+                allocateReduceTask(listSmallerHashmaps);
             } else {
                 //Check for mapper completion
                 isCompleted = checkForCompletion(job.getReducerSlaveID());
@@ -129,15 +129,19 @@ public class MasterScheduler {
         }
     }
 
-    private void allocateReduceTask(HashMap<String, ArrayList<String>> keyShuffleFileInfoMapping) throws IOException {
+    private void allocateReduceTask(ArrayList<HashMap<String, ArrayList<String>>> keyShuffleFileInfoMapping) throws IOException {
         //find free slave
         //update the job.reducers
         //send the client jar
-        LOGGER.log(Level.INFO, "Allocating one reduce task");
         if (findFreeSlave()) {
+            LOGGER.log(Level.INFO, "Allocating one reduce task");
+
             this.job.getReducerSlaveID().add(this.freeSlaveID);
             //Allocate job to slave
-            initiateReducerSlaveJob(keyShuffleFileInfoMapping);
+            HashMap<String, ArrayList<String>> smallHM = keyShuffleFileInfoMapping.get(0);
+            keyShuffleFileInfoMapping.remove(0);
+
+            initiateReducerSlaveJob(smallHM);
         }
     }
 
@@ -177,10 +181,7 @@ public class MasterScheduler {
                 LOGGER.log(Level.INFO, "File sent. File details: " + fileLoc);
             }
         }
-
         reducerOut.println(Message.RUN_REDUCE+":"+jobConfClassName);
-
-
     }
 
     private String getDestId(String fileLoc) {
