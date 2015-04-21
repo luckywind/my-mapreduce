@@ -1,7 +1,7 @@
 package neu.mapreduce.io.sockets;
 
 import api.JobConf;
-import neu.mapreduce.core.reducer.Reducer;
+import neu.mapreduce.core.reducer.ReduceRun;
 import neu.mapreduce.core.sort.MasterShuffleMerge;
 
 import java.io.File;
@@ -46,7 +46,7 @@ public class SlaveReduceRunThread implements Runnable {
         }
 
 
-        new Reducer().reduceRun(OUTPUT_FILE_PATH, listOfMergedFilePath, jobConf.getMapKeyOutputClassName(),jobConf.getMapValueOutputClassName(), jobConf.getReducerClassName(), reducerClientJarPath);
+        new ReduceRun().reduceRun(OUTPUT_FILE_PATH, listOfMergedFilePath, jobConf.getMapKeyOutputClassName(),jobConf.getMapValueOutputClassName(), jobConf.getReducerClassName(), reducerClientJarPath);
 
         SlaveListener.status = ConnectionTypes.JOB_COMPLETE;
 

@@ -16,4 +16,5 @@ public interface Message {
     String CHANGE_STATUS = "changeStatus";
     String STATUS = "status";
     String RUN_JOB = "runJob";
+    public static final String READY_TO_RECEIVE_JAR = "readyToReceiveJar";
 }

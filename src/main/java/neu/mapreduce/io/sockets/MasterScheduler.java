@@ -4,7 +4,6 @@ import api.JobConf;
 import neu.mapreduce.core.factory.JobConfFactory;
 import neu.mapreduce.core.shuffle.Shuffle;
 import org.apache.commons.io.IOUtils;
-import sun.rmi.runtime.Log;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -144,12 +143,18 @@ public class MasterScheduler {
 
     private void initiateReducerSlaveJob(HashMap<String, ArrayList<String>> keyShuffleFileInfoMapping) throws IOException {
         //send the client jar
-       LOGGER.log(Level.INFO, "num keys received for reduce task: " + keyShuffleFileInfoMapping.size());
         Socket messageSocket = slaves.get(this.freeSlaveID);
+        LOGGER.log(Level.INFO, "Allocating slave "+this.freeSlaveID+" as reducer. # of keys to this reducer: " + keyShuffleFileInfoMapping.size());
+
         PrintWriter reducerOut = new PrintWriter(messageSocket.getOutputStream(), true);
         BufferedReader reducerIn = new BufferedReader(
                 new InputStreamReader(messageSocket.getInputStream()));
         reducerOut.println(Message.INITIAL_REDUCE);
+        while(!reducerIn.readLine().equals(Message.READY_TO_RECEIVE_JAR)){
+
+        }
+        LOGGER.log(Level.INFO, "Reducer is ready to receive jar");
+
         sendFile(this.inputJar, getIp(this.freeSlaveID), SlaveListener.REDUCER_LISTENER_PORT);
         while(!reducerIn.readLine().equals(Message.JAR_RECEIVED)){
 
@@ -261,7 +266,6 @@ public class MasterScheduler {
         fileSender.close();
     }
 
-
     private String getIp(String freeSlaveID) {
         String[] slaveIdSplit = freeSlaveID.split(":");
         return slaveIdSplit[0];
@@ -281,7 +285,7 @@ public class MasterScheduler {
             }else if(slaveStatus.equals("Complete")){
                 LOGGER.log(Level.INFO, "From findFreeSlave(): Master commands slave to change status from complete to idle");
                 out.println(Message.CHANGE_STATUS);
-                slaveFound = true;
+               // slaveFound = true;
             }
             if(slaveFound){
                 this.freeSlaveID = slaveID;

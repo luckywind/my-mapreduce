@@ -10,7 +10,7 @@ import java.util.HashMap;
 /**
  * Created by Amitash on 4/20/15.
  */
-public class MasterDaemon
+public class MasterRunner
 {
     private final String jobConfClassName;
     int splitSizeInMB;
@@ -19,7 +19,7 @@ public class MasterDaemon
     HashMap<String, Integer> slaveToSlavePorts;
     String inputJar;
 
-    public MasterDaemon(String inputFile, String inputJar, String jobConfClassName, int splitSizeInMB) throws IOException {
+    public MasterRunner(String inputFile, String inputJar, String jobConfClassName, int splitSizeInMB) throws IOException {
         this.splitSizeInMB = splitSizeInMB;
         this.inputJar = inputJar;
         SplitFile splitFile = new SplitFile(splitSizeInMB);
@@ -35,9 +35,9 @@ public class MasterDaemon
         slaves.put("localhost:8087", new Socket("localhost", 8087));
         slaves.put("localhost:8083", new Socket("localhost", 8083));
         slaves.put("localhost:8090", new Socket("localhost", 8090));
-        slaveToSlavePorts.put("localhost:8087", 6062);
-        slaveToSlavePorts.put("localhost:8083", 6067);
-        slaveToSlavePorts.put("localhost:8090", 6090);
+        slaveToSlavePorts.put("localhost:8087", 7062);
+        slaveToSlavePorts.put("localhost:8083", 7067);
+        slaveToSlavePorts.put("localhost:8090", 7090);
     }
 
     public void runJob() throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
@@ -52,7 +52,7 @@ public class MasterDaemon
         String inputJar =  Constants.HOME + Constants.USER + Constants.CLIENT_FOLDER + CLIENT_JAR_WITH_DEPENDENCIES_JAR;
         String jobConfClassName = "mapperImpl.AirlineJobConf";
         int splitSizeInMB = 64;
-        MasterDaemon masterDaemon = new MasterDaemon(inputFile, inputJar, jobConfClassName, splitSizeInMB);
+        MasterRunner masterDaemon = new MasterRunner(inputFile, inputJar, jobConfClassName, splitSizeInMB);
         masterDaemon.runJob();
     }
 }

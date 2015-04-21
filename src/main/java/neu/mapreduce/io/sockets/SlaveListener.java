@@ -23,7 +23,7 @@ public class SlaveListener {
     public static String REDUCER_FOLDER_PATH;// = Constants.HOME + Constants.USER + Constants.MR_RUN_FOLDER + Constants.REDUCE_FOLDER;
     public static String REDUCER_CLIENT_JAR_PATH; // = REDUCER_FOLDER_PATH + "/red-client-jar-with-dependencies.jar";
     public static String MAPPER_FOLDER_PATH = Constants.HOME + Constants.USER + Constants.MR_RUN_FOLDER + Constants.MAP_FOLDER;
-    public static final int REDUCER_LISTENER_PORT = 6061;
+    public static final int REDUCER_LISTENER_PORT = 9061;
     public static int shuffleDirCounter;
     private int slaveToSlavePort;
     public int port;
@@ -127,10 +127,14 @@ public class SlaveListener {
     }
 
     private void initialReduce(Socket masterSocket) throws IOException {
-        LOGGER.log(Level.INFO, "Reducer started..");
+        LOGGER.log(Level.INFO, "Selected as reducer..");
         ServerSocket listener = new ServerSocket(REDUCER_LISTENER_PORT);
-        receiveFile(listener, REDUCER_CLIENT_JAR_PATH);
+
         PrintWriter out = new PrintWriter(masterSocket.getOutputStream(), true);
+        out.println(Message.READY_TO_RECEIVE_JAR);
+
+        receiveFile(listener, REDUCER_CLIENT_JAR_PATH);
+//        PrintWriter out = new PrintWriter(masterSocket.getOutputStream(), true);
         out.println(Message.JAR_RECEIVED);
         //CLOSE AFTER ALL JAR AND SHUFFLE FILES ARE RECEIVED
 

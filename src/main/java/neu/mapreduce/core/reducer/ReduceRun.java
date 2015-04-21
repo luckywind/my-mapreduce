@@ -6,8 +6,6 @@ import neu.mapreduce.core.factory.WriteComparableFactory;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -17,13 +15,13 @@ import java.util.logging.Logger;
 /**
  * Created by mit on 4/9/15.
  */
-public class Reducer {
+public class ReduceRun {
 
     //Takes as input a jar file which contains the reducer code
     // Converts the output of the sort to itertor
     // Runs the reducer code only once
 
-    private final static Logger LOGGER = Logger.getLogger(Reducer.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(ReduceRun.class.getName());
 
     /*public static void main(String args[]) {
         String outputFilePath = "/home/mit/Desktop/input/my-mapreduce/op-reducer";
