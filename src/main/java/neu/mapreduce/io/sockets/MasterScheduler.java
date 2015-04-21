@@ -94,7 +94,8 @@ public class MasterScheduler {
 
         }
         ArrayList<HashMap<String, ArrayList<String>>> listSmallerHashmaps = splitKeyMapping(this.keyFileMapping, this.jobConf.getNumReducers());
-        LOGGER.log(Level.INFO, "Starting reducer/s");
+        LOGGER.log(Level.INFO, listSmallerHashmaps.size()+" equals "+this.jobConf.getNumReducers()+":: # of hashmaps vs # of reducers");
+        LOGGER.log(Level.INFO, "Starting reducer/s: # of reducers:"+this.jobConf.getNumReducers());
         scheduleReducer(listSmallerHashmaps);
     }
 

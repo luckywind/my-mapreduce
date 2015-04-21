@@ -20,8 +20,8 @@ public class SlaveListener {
     private static final Logger LOGGER = Logger.getLogger(SlaveListener.class.getName());
     private static int numMapTasks=0;
     public static final int LISTENER_PORT = 6060;
-    public final static String REDUCER_FOLDER_PATH = Constants.HOME + Constants.USER + Constants.MR_RUN_FOLDER + Constants.REDUCE_FOLDER;
-    public static final String REDUCER_CLIENT_JAR_PATH = REDUCER_FOLDER_PATH + "/red-client-jar-with-dependencies.jar";
+    public static String REDUCER_FOLDER_PATH;// = Constants.HOME + Constants.USER + Constants.MR_RUN_FOLDER + Constants.REDUCE_FOLDER;
+    public static String REDUCER_CLIENT_JAR_PATH; // = REDUCER_FOLDER_PATH + "/red-client-jar-with-dependencies.jar";
     public static String MAPPER_FOLDER_PATH = Constants.HOME + Constants.USER + Constants.MR_RUN_FOLDER + Constants.MAP_FOLDER;
     public static final int REDUCER_LISTENER_PORT = 6061;
     public static int shuffleDirCounter;
@@ -38,7 +38,12 @@ public class SlaveListener {
         this.port = port;
         this.slaveToSlavePort = slaveToSlavePort;
         SlaveListener.status = ConnectionTypes.IDLE;
+
+        REDUCER_FOLDER_PATH = Constants.HOME + Constants.USER + Constants.MR_RUN_FOLDER + Constants.REDUCE_FOLDER+this.port;
+        REDUCER_CLIENT_JAR_PATH = REDUCER_FOLDER_PATH + "/red-client-jar-with-dependencies.jar";
+        
         new File(REDUCER_FOLDER_PATH).mkdirs();
+        
 
         SlaveListener.MAPPER_FOLDER_PATH = SlaveListener.MAPPER_FOLDER_PATH + this.port;
         new File(MAPPER_FOLDER_PATH).mkdirs();
@@ -53,7 +58,7 @@ public class SlaveListener {
     }
 
     public void startListening() throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-        System.out.println("Listening...On port: xx"+this.port);
+        System.out.println("Listening...On port: "+this.port);
         ServerSocket listener = new ServerSocket(port);
         while (true) {
             Socket socket = listener.accept();
@@ -122,7 +127,7 @@ public class SlaveListener {
     }
 
     private void initialReduce(Socket masterSocket) throws IOException {
-
+        LOGGER.log(Level.INFO, "Reducer started..");
         ServerSocket listener = new ServerSocket(REDUCER_LISTENER_PORT);
         receiveFile(listener, REDUCER_CLIENT_JAR_PATH);
         PrintWriter out = new PrintWriter(masterSocket.getOutputStream(), true);
@@ -141,7 +146,6 @@ public class SlaveListener {
         fos.close();
         in.close();
         sender.close();
-
     }
 
     private void sendKeyMappingFile() throws IOException {
