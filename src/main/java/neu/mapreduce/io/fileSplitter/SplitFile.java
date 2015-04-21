@@ -30,6 +30,7 @@ public class SplitFile {
         int partCount = 0;
         int index = 0;
         while ((line = br.readLine()) != null) {
+            line += "\n";
             byte[] b = line.getBytes();
             curSize += b.length;
             if(curSize > maxSize){
@@ -38,8 +39,8 @@ public class SplitFile {
                 index = 0;
                 curSize = 0;
                 //Write the curPartition to file
-                writeByteArrayToFile(curPartition, PATH_MASTER_FOLDER + "part-" + String.valueOf(partCount));
-                fileSplits.add(PATH_MASTER_FOLDER + "part-" + String.valueOf(partCount));
+                writeByteArrayToFile(curPartition, PATH_MASTER_FOLDER + "/part-" + String.valueOf(partCount));
+                fileSplits.add(PATH_MASTER_FOLDER + "/part-" + String.valueOf(partCount));
                 ////
                 for(int i = 0; i<b.length; i++){
                     curPartition[index] = b[i];
@@ -60,8 +61,8 @@ public class SplitFile {
         for(int i = 0; i<=index; i++){
             finPartition[i] = curPartition[i];
         }
-        writeByteArrayToFile(finPartition, PATH_MASTER_FOLDER + "part-" + String.valueOf(partCount));
-        fileSplits.add(PATH_MASTER_FOLDER + "part-" + String.valueOf(partCount));
+        writeByteArrayToFile(finPartition, PATH_MASTER_FOLDER + "/part-" + String.valueOf(partCount));
+        fileSplits.add(PATH_MASTER_FOLDER + "/part-" + String.valueOf(partCount));
         return fileSplits;
     }
 

@@ -1,5 +1,6 @@
 package neu.mapreduce.io.sockets;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 
 /**
@@ -9,32 +10,32 @@ public class Job {
 
 
     private Long jobID;
-    private HashSet<String> mapperSlaveID;
-    private HashSet<String> reducerSlaveID;
+    private ArrayList<String> mapperSlaveID;
+    private ArrayList<String> reducerSlaveID;
 
     public Job() {
         jobID = System.currentTimeMillis();
-        this.mapperSlaveID = new HashSet<>();
-        this.reducerSlaveID = new HashSet<>();
+        this.mapperSlaveID = new ArrayList<>();
+        this.reducerSlaveID = new ArrayList<>();
     }
 
     public Long getJobID() {
         return jobID;
     }
 
-    public HashSet<String> getReducerSlaveID() {
+    public ArrayList<String> getReducerSlaveID() {
         return reducerSlaveID;
     }
 
-    public void setReducerSlaveID(HashSet<String> reducerSlaveID) {
+    public void setReducerSlaveID(ArrayList<String> reducerSlaveID) {
         this.reducerSlaveID = reducerSlaveID;
     }
 
-    public HashSet<String> getMapperSlaveID() {
+    public ArrayList<String> getMapperSlaveID() {
         return mapperSlaveID;
     }
 
-    public void setMapperSlaveID(HashSet<String> mapperSlaveID) {
+    public void setMapperSlaveID(ArrayList<String> mapperSlaveID) {
         this.mapperSlaveID = mapperSlaveID;
     }
 
