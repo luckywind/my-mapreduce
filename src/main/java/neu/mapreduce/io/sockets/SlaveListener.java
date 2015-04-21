@@ -58,7 +58,7 @@ public class SlaveListener {
     }
 
     public void startListening() throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-        System.out.println("Listening...On port: "+this.port);
+        System.out.println("Listening...On port: "+this.port+" & "+this.slaveToSlavePort);
         ServerSocket listener = new ServerSocket(port);
         while (true) {
             Socket socket = listener.accept();
