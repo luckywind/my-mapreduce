@@ -1,4 +1,4 @@
-package neu.mapreduce.commons.fileSplitter;
+package neu.mapreduce.io.fileSplitter;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -10,9 +10,8 @@ public class splitFileTest {
     public static void main(String[] args) throws IOException {
         //SplitFile splitFile = new SplitFile(64);
         //splitFile.splitFile("/Users/Amitash/Desktop/A3/data.csv");
-        FileReader fr = new FileReader("/usr/local/apache-maven/apache-maven-3.2.5/hadoop-course/part-1");
-
-
-
+        FileReader fr = new FileReader("/home/mit/Desktop/MR_Client/inputData.txt");
+        SplitFile splitFile = new SplitFile(64);
+//        splitFile
     }
 }

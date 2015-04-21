@@ -18,31 +18,42 @@ import java.util.logging.Logger;
  */
 public class SlaveListener {
     private static final Logger LOGGER = Logger.getLogger(SlaveListener.class.getName());
-
+    private static int numMapTasks=0;
     public static final int LISTENER_PORT = 6060;
     public final static String REDUCER_FOLDER_PATH = Constants.HOME + Constants.USER + Constants.MR_RUN_FOLDER + Constants.REDUCE_FOLDER;
     public static final String REDUCER_CLIENT_JAR_PATH = REDUCER_FOLDER_PATH + "/red-client-jar-with-dependencies.jar";
-    public static final String MAPPER_FOLDER_PATH = Constants.HOME + Constants.USER + Constants.MR_RUN_FOLDER + Constants.MAP_FOLDER;
+    public static String MAPPER_FOLDER_PATH = Constants.HOME + Constants.USER + Constants.MR_RUN_FOLDER + Constants.MAP_FOLDER;
     public static final int REDUCER_LISTENER_PORT = 6061;
     public static int shuffleDirCounter;
+    private int slaveToSlavePort;
     public int port;
     public static ConnectionTypes status;
-    public static final String INPUT_CHUNK = MAPPER_FOLDER_PATH + "/input_chunk.txt";
-    public static final String MAPPER_CLIENT_JAR_PATH = MAPPER_FOLDER_PATH + "/map-client-jar-with-dependencies.jar";
-    public static final String MAP_OUTPUT_FILE_PATH = MAPPER_FOLDER_PATH + "/map_op_shuffle_ip.txt";
-    public static final String SHUFFLE_OUTPUT_FOLDER = MAPPER_FOLDER_PATH + "/shuffle";
+    public static String INPUT_CHUNK; // = MAPPER_FOLDER_PATH + "/input_chunk.txt";
+    public static String MAPPER_CLIENT_JAR_PATH; // = MAPPER_FOLDER_PATH + "/map-client-jar-with-dependencies.jar";
+    public static String MAP_OUTPUT_FILE_PATH; // = MAPPER_FOLDER_PATH + "/map_op_shuffle_ip.txt";
+    public static String SHUFFLE_OUTPUT_FOLDER; // = MAPPER_FOLDER_PATH + "/shuffle";
 
 
-    public SlaveListener(int port) {
+    public SlaveListener(int port, int slaveToSlavePort) {
         this.port = port;
+        this.slaveToSlavePort = slaveToSlavePort;
         SlaveListener.status = ConnectionTypes.IDLE;
         new File(REDUCER_FOLDER_PATH).mkdirs();
+
+        SlaveListener.MAPPER_FOLDER_PATH = SlaveListener.MAPPER_FOLDER_PATH + this.port;
         new File(MAPPER_FOLDER_PATH).mkdirs();
-        new Thread(new SlaveToSlaveFileTransferThread()).start();
+        INPUT_CHUNK = MAPPER_FOLDER_PATH + "/input_chunk.txt";
+        MAPPER_CLIENT_JAR_PATH = MAPPER_FOLDER_PATH + "/map-client-jar-with-dependencies.jar";
+        MAP_OUTPUT_FILE_PATH = MAPPER_FOLDER_PATH + "/map_op_shuffle_ip.txt";
+        SHUFFLE_OUTPUT_FOLDER = MAPPER_FOLDER_PATH + "/shuffle";
+
+        new Thread(new SlaveToSlaveFileTransferThread(this.slaveToSlavePort)).start();
+
+     
     }
 
     public void startListening() throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-        System.out.println("Listening...");
+        System.out.println("Listening...On port: xx"+this.port);
         ServerSocket listener = new ServerSocket(port);
         while (true) {
             Socket socket = listener.accept();
@@ -65,6 +76,7 @@ public class SlaveListener {
         if (inputMessage.equals(Message.STATUS)) {
             statusRequestHandler(socket);
         } else if (inputMessage.equals(Message.CHANGE_STATUS)) {
+            LOGGER.log(Level.INFO, "Master tells slave to be idle");
             SlaveListener.status = ConnectionTypes.IDLE;
         } else if (inputMessage.startsWith(Message.RUN_JOB)) {
             runMapJobRequestHandler(socket, getJobConfigClassname(inputMessage));
@@ -92,16 +104,14 @@ public class SlaveListener {
     }
 
     private void runReduce(String jobConfigClassname) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException, MalformedURLException, ClassNotFoundException {
-        
         new Thread(new SlaveReduceRunThread(REDUCER_CLIENT_JAR_PATH, getJobConf(REDUCER_CLIENT_JAR_PATH, jobConfigClassname))).start();
-
     }
 
     private void sendShuffleFiles(String inputMessage, Socket masterSocket) throws IOException {
         LOGGER.log(Level.INFO, inputMessage);
-        //0:SEND_SHUFFLE_FILE 1: dest_ip, 2: dest_port; 3:local_file_loc
+        //0:SEND_SHUFFLE_FILE 1: dest_ip, 2: dest_port; 3:local_file_loc, 4:rmt_slave_to_slave_port
         String[] inputMsgSplit = inputMessage.split(":");
-        IOCommons.sendFile(inputMsgSplit[3], inputMsgSplit[1], SlaveToSlaveFileTransferThread.SLAVE_TO_SLAVE_PORT);
+        IOCommons.sendFile(inputMsgSplit[3], inputMsgSplit[1], Integer.parseInt(inputMsgSplit[4]));
         PrintWriter out = new PrintWriter(masterSocket.getOutputStream(), true);
         out.println(Message.FILE_SENT);
     }
@@ -120,7 +130,6 @@ public class SlaveListener {
         //CLOSE AFTER ALL JAR AND SHUFFLE FILES ARE RECEIVED
 
         listener.close();
-
     }
 
     public void receiveFile(ServerSocket listener, String outputFileName) throws IOException {
@@ -138,7 +147,7 @@ public class SlaveListener {
     private void sendKeyMappingFile() throws IOException {
         Socket sender = new Socket(MasterScheduler.masterIP, SlaveListener.LISTENER_PORT);
 
-        FileInputStream inputStream = new FileInputStream(SHUFFLE_OUTPUT_FOLDER + "/" + Shuffle.KEY_FILENAME_MAPPING);
+        FileInputStream inputStream = new FileInputStream(SHUFFLE_OUTPUT_FOLDER + (--numMapTasks) + "/" + Shuffle.KEY_FILENAME_MAPPING);
         OutputStream outputStream = sender.getOutputStream();
         IOUtils.copy(inputStream, outputStream);
         inputStream.close();
@@ -188,7 +197,7 @@ public class SlaveListener {
             new Thread(new SlaveMapRunThread(
                     INPUT_CHUNK,
                     MAP_OUTPUT_FILE_PATH,
-                    SHUFFLE_OUTPUT_FOLDER,
+                    SHUFFLE_OUTPUT_FOLDER + numMapTasks++,
                     MAPPER_CLIENT_JAR_PATH,
                     jobConf))
                     .start();
@@ -219,8 +228,9 @@ public class SlaveListener {
 
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
-
-        SlaveListener listener = new SlaveListener(8087);
+        //0:8087
+        //SlaveListener listener = new SlaveListener(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
+        SlaveListener listener = new SlaveListener(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
         listener.startListening();
     }
 }

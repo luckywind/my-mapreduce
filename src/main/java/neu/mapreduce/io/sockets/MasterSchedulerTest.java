@@ -9,6 +9,7 @@ import java.util.HashMap;
 /**
  * Created by Amitash on 4/18/15.
  */
+@Deprecated
 public class MasterSchedulerTest {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
@@ -23,8 +24,8 @@ public class MasterSchedulerTest {
         fileSplits.add(inputFile);
         HashMap<String, Socket> testMap = new HashMap<String, Socket>();
         testMap.put("localhost:8087", new Socket("localhost", 8087));
-        MasterScheduler masterScheduler = new MasterScheduler(fileSplits, inputJar, testMap, jobConfClassName);
-        masterScheduler.schedule();
-        System.out.println("Complete");
+       // MasterScheduler masterScheduler = new MasterScheduler(fileSplits, inputJar, testMap, jobConfClassName);
+        //masterScheduler.schedule();
+        System.out.println("DEPRECATED... Complete");
     }
 }
