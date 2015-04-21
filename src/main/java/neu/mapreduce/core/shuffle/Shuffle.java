@@ -47,7 +47,7 @@ public class Shuffle {
 
             while ((line = inputBufferedReader.readLine()) != null) {
 
-                String[] keyvalue = line.split(INPUT_FILE_KEYVALUE_SEPARATOR);
+                String[] keyvalue = line.split(INPUT_FILE_KEYVALUE_SEPARATOR, 2);
 
                 if (keyvalue.length < 2) {
                     LOGGER.log(Level.WARNING, "SHUFFLE: Ignoring one line as it does not have a key and value. Line:" + keyvalue);

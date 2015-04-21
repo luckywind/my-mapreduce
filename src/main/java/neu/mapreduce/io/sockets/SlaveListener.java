@@ -135,9 +135,9 @@ public class SlaveListener {
         out.println(Message.READY_TO_RECEIVE_JAR);
 
         receiveFile(listener, REDUCER_CLIENT_JAR_PATH);
-//        PrintWriter out = new PrintWriter(masterSocket.getOutputStream(), true);
+        // PrintWriter out = new PrintWriter(masterSocket.getOutputStream(), true);
         out.println(Message.JAR_RECEIVED);
-        //CLOSE AFTER ALL JAR AND SHUFFLE FILES ARE RECEIVED
+        // CLOSE AFTER ALL JAR AND SHUFFLE FILES ARE RECEIVED
 
         listener.close();
     }
@@ -195,12 +195,12 @@ public class SlaveListener {
             SlaveListener.status = ConnectionTypes.BUSY;
             //Run the job in new thread here
 
-//            String inputFilePath = "/home/srikar/Desktop/input/purchases.txt";
-//            String mapperClassname = "mapperImpl.AirlineMapper";
+            //String inputFilePath = "/home/srikar/Desktop/input/purchases.txt";
+            //String mapperClassname = "mapperImpl.AirlineMapper";
 
             //TODO: NEED TO GENERATE ON FLY
-//            String keyClassName = "impl.StringWritable";
-//            String valueClassname = "impl.FloatWritable";
+            //String keyClassName = "impl.StringWritable";
+            //String valueClassname = "impl.FloatWritable";
 //            boolean isCombinerSet = false;
 
             new Thread(new SlaveMapRunThread(

@@ -29,7 +29,6 @@ public class SlaveReduceRunThread implements Runnable {
 
     @Override
     public void run() {
-
        // new File(SlaveListener.REDUCER_FOLDER_PATH+"/"+ MasterShuffleMerge.OUTPUT_FILE_NAME).mkdir();
 
         ArrayList<String> listOfMergedFilePath = new ArrayList<>();
@@ -45,13 +44,10 @@ public class SlaveReduceRunThread implements Runnable {
             }
         }
 
-
         new ReduceRun().reduceRun(OUTPUT_FILE_PATH, listOfMergedFilePath, jobConf.getMapKeyOutputClassName(),jobConf.getMapValueOutputClassName(), jobConf.getReducerClassName(), reducerClientJarPath);
-
         SlaveListener.status = ConnectionTypes.JOB_COMPLETE;
-
-
     }
+    
     //returns just names and not complete path
     public String[] getAllSubDirectories(String inputDir) {
         File file = new File(inputDir);
