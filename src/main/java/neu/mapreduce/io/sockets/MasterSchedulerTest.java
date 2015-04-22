@@ -25,7 +25,7 @@ public class MasterSchedulerTest {
         HashMap<String, Socket> testMap = new HashMap<String, Socket>();
         testMap.put("localhost:8087", new Socket("localhost", 8087));
        // MasterScheduler masterScheduler = new MasterScheduler(fileSplits, inputJar, testMap, jobConfClassName);
-        //masterScheduler.schedule();
+        //masterScheduler.scheduleMap();
         System.out.println("DEPRECATED... Complete");
     }
 }

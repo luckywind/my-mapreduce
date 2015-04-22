@@ -17,4 +17,7 @@ public interface Message {
     String STATUS = "status";
     String RUN_JOB = "runJob";
     public static final String READY_TO_RECEIVE_JAR = "readyToReceiveJar";
+    String IDLE = "Idle";
+    String COMPLETE = "Complete";
+    String BUSY = "Busy";
 }

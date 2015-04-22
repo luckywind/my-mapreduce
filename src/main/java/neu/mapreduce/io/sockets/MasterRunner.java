@@ -42,7 +42,7 @@ public class MasterRunner
 
     public void runJob() throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
         MasterScheduler masterScheduler = new MasterScheduler(this.fileSplits, this.inputJar, this.slaves, this.jobConfClassName, this.slaveToSlavePorts);
-        masterScheduler.schedule();
+        masterScheduler.scheduleMap();
         System.out.println("Complete");
     }
     

@@ -18,45 +18,62 @@ import java.util.logging.Logger;
  */
 public class SlaveListener {
     private static final Logger LOGGER = Logger.getLogger(SlaveListener.class.getName());
-    private static int numMapTasks=0;
-    public static final int LISTENER_PORT = 6060;
-    public static String REDUCER_FOLDER_PATH;// = Constants.HOME + Constants.USER + Constants.MR_RUN_FOLDER + Constants.REDUCE_FOLDER;
-    public static String REDUCER_CLIENT_JAR_PATH; // = REDUCER_FOLDER_PATH + "/red-client-jar-with-dependencies.jar";
-    public static String MAPPER_FOLDER_PATH = Constants.HOME + Constants.USER + Constants.MR_RUN_FOLDER + Constants.MAP_FOLDER;
-    public static final int REDUCER_LISTENER_PORT = 9061;
-    public static int shuffleDirCounter;
-    private int slaveToSlavePort;
-    public int port;
-    public static ConnectionTypes status;
-    public static String INPUT_CHUNK; // = MAPPER_FOLDER_PATH + "/input_chunk.txt";
-    public static String MAPPER_CLIENT_JAR_PATH; // = MAPPER_FOLDER_PATH + "/map-client-jar-with-dependencies.jar";
-    public static String MAP_OUTPUT_FILE_PATH; // = MAPPER_FOLDER_PATH + "/map_op_shuffle_ip.txt";
-    public static String SHUFFLE_OUTPUT_FOLDER; // = MAPPER_FOLDER_PATH + "/shuffle";
 
+    public static String REDUCER_FOLDER_PATH;
+
+    public static String REDUCER_CLIENT_JAR_PATH;
+    public static String MAPPER_FOLDER_PATH = Constants.HOME + Constants.USER + Constants.MR_RUN_FOLDER + Constants.MAP_FOLDER;
+    public static int shuffleDirCounter;
+    public static ConnectionTypes status;
+
+    private static int numMapTasks=0;
+
+    public static String INPUT_CHUNK;
+    public static String MAPPER_CLIENT_JAR_PATH;
+    public static String MAP_OUTPUT_FILE_PATH;
+    public static String SHUFFLE_OUTPUT_FOLDER;
+    
+    //This port is used for message transfer with master
+    public int port;
+    //This port is used to communicate with other slaves
+    private int slaveToSlavePort;
+
+    public static final int TWO = 2;
+    public static final int ONE = 1;
+    public static final int THREE = 3;
+    public static final int FOUR = 4;
+    public static final String MSG_SPLITTER = ":";
 
     public SlaveListener(int port, int slaveToSlavePort) {
+        //Setup for communication
         this.port = port;
         this.slaveToSlavePort = slaveToSlavePort;
         SlaveListener.status = ConnectionTypes.IDLE;
 
+        // Initializes the names of folder and files for map-reduce tasks
         REDUCER_FOLDER_PATH = Constants.HOME + Constants.USER + Constants.MR_RUN_FOLDER + Constants.REDUCE_FOLDER+this.port;
         REDUCER_CLIENT_JAR_PATH = REDUCER_FOLDER_PATH + "/red-client-jar-with-dependencies.jar";
-        
-        new File(REDUCER_FOLDER_PATH).mkdirs();
-        
-
         SlaveListener.MAPPER_FOLDER_PATH = SlaveListener.MAPPER_FOLDER_PATH + this.port;
-        new File(MAPPER_FOLDER_PATH).mkdirs();
         INPUT_CHUNK = MAPPER_FOLDER_PATH + "/input_chunk.txt";
         MAPPER_CLIENT_JAR_PATH = MAPPER_FOLDER_PATH + "/map-client-jar-with-dependencies.jar";
         MAP_OUTPUT_FILE_PATH = MAPPER_FOLDER_PATH + "/map_op_shuffle_ip.txt";
         SHUFFLE_OUTPUT_FOLDER = MAPPER_FOLDER_PATH + "/shuffle";
 
+        //Starting a thread for slave to slave communication
         new Thread(new SlaveToSlaveFileTransferThread(this.slaveToSlavePort)).start();
-
-     
     }
 
+    /**
+     * This is startup method for the slave. It starts the connection 
+     * and waits for communication from the master.
+     * 
+     * * @throws IOException
+     * @throws ClassNotFoundException
+     * @throws NoSuchMethodException
+     * @throws InvocationTargetException
+     * @throws InstantiationException
+     * @throws IllegalAccessException
+     */
     public void startListening() throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         System.out.println("Listening...On port: "+this.port+" & "+this.slaveToSlavePort);
         ServerSocket listener = new ServerSocket(port);
@@ -68,7 +85,7 @@ public class SlaveListener {
 
             while (true) {
                 while ((inputMessage = in.readLine()) == null) {
-                    //idle the machine
+                    //idle slave
                 }
                 //Send idle/busy response. Switch case to handle all possible requests.
                 handleRequest(inputMessage, socket);
@@ -77,18 +94,30 @@ public class SlaveListener {
     }
 
 
+    /**
+     * Handles messages sent by the master 
+     * (Switch cases is not available on String class in Java 1.6)
+     *  
+     * @param inputMessage
+     * @param socket
+     * @throws IOException
+     * @throws ClassNotFoundException
+     * @throws NoSuchMethodException
+     * @throws InstantiationException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     */
     private void handleRequest(String inputMessage, Socket socket) throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
         if (inputMessage.equals(Message.STATUS)) {
             statusRequestHandler(socket);
         } else if (inputMessage.equals(Message.CHANGE_STATUS)) {
-            LOGGER.log(Level.INFO, "Master tells slave to be idle");
-            SlaveListener.status = ConnectionTypes.IDLE;
+            changeToIdle();
         } else if (inputMessage.startsWith(Message.RUN_JOB)) {
-            runMapJobRequestHandler(socket, getJobConfigClassname(inputMessage));
+            preProcessAndRunMap(socket, getJobConfigClassname(inputMessage));
         } else if (inputMessage.equals(Message.SEND_KEY_MAPPING_FILE_MESSAGE)) {
             sendKeyMappingFile();
         } else if (inputMessage.equals(Message.INITIAL_REDUCE)) {
-            initialReduce(socket);
+            preProcessReduce(socket);
         } else if (inputMessage.equals(Message.INITIAL_GET_KEY_SHUFFLE)) {
             createShuffleDir();
         } else if (inputMessage.startsWith(Message.SEND_SHUFFLE_FILE)) {
@@ -98,144 +127,180 @@ public class SlaveListener {
         }
     }
 
-    private String getJobConfigClassname(String inputMessage) {
-
-        String[] ipMsgSplit = inputMessage.split(":");
-        if(ipMsgSplit.length == 2){
-            return ipMsgSplit[1];
+    /**
+     * Responds with the status of the machine as either Idle, Busy or Job Complete  
+     * @param socket
+     * @throws IOException
+     */
+    private void statusRequestHandler(Socket socket) throws IOException {
+        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+        if (SlaveListener.status == ConnectionTypes.IDLE) {
+            out.println(Message.IDLE);
+        } else if (SlaveListener.status == ConnectionTypes.JOB_COMPLETE) {
+            //handle what happens after job is done.
+            out.println(Message.COMPLETE);
+        } else {
+            out.println(Message.BUSY);
         }
-        LOGGER.log(Level.SEVERE, "Set jobconfig file name in the msg from Master to Mapper Slave");
-        return null;
     }
 
-    private void runReduce(String jobConfigClassname) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException, MalformedURLException, ClassNotFoundException {
+    /**
+     * Changes the status to Idle 
+     */
+    private void changeToIdle() {
+        LOGGER.log(Level.INFO, "Master tells slave to be idle");
+        SlaveListener.status = ConnectionTypes.IDLE;
+    }
+
+    /**
+     * Receives the files from mapper and runs the mapper 
+     * * @param socket
+     * @param jobConfClassName
+     * @throws IOException
+     * @throws ClassNotFoundException
+     * @throws NoSuchMethodException
+     * @throws InvocationTargetException
+     * @throws InstantiationException
+     * @throws IllegalAccessException
+     */
+    private void preProcessAndRunMap(Socket socket, String jobConfClassName) throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+        new File(MAPPER_FOLDER_PATH).mkdirs();
+        ServerSocket listener = new ServerSocket(MasterScheduler.MASTER_FT_PORT_MAPPER);
+        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+        out.println(Message.READY_FOR_JOB);
+        //Receives input chunk and jar from the master
+        IOCommons.receiveFile(listener, INPUT_CHUNK);
+        IOCommons.receiveFile(listener, MAPPER_CLIENT_JAR_PATH);
+        listener.close();
+        runMap(jobConfClassName);
+    }
+
+    /**
+     * Initiates a thread to run the map job
+     * @param jobConfClassName
+     * @throws MalformedURLException
+     * @throws ClassNotFoundException
+     * @throws NoSuchMethodException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     * @throws InstantiationException
+     */
+    private void runMap(String jobConfClassName) throws MalformedURLException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         SlaveListener.status = ConnectionTypes.BUSY;
-        new Thread(new SlaveReduceRunThread(REDUCER_CLIENT_JAR_PATH, getJobConf(REDUCER_CLIENT_JAR_PATH, jobConfigClassname))).start();
+        new Thread(new SlaveMapRunThread(
+                INPUT_CHUNK,
+                MAP_OUTPUT_FILE_PATH,
+                SHUFFLE_OUTPUT_FOLDER + numMapTasks++,
+                MAPPER_CLIENT_JAR_PATH,
+                getJobConf(MAPPER_CLIENT_JAR_PATH, jobConfClassName)))
+                .start();
     }
 
+    /**
+     * Send the key mapping file from the output of the map phase to master
+     * * 
+     * @throws IOException
+     */
+    private void sendKeyMappingFile() throws IOException {
+        IOCommons.sendFile(
+                SHUFFLE_OUTPUT_FOLDER + (--numMapTasks) + "/" + Shuffle.KEY_FILENAME_MAPPING,
+                MasterScheduler.masterIP,
+                MasterScheduler.MASTER_FT_PORT_MAPPER);
+    }
+
+    /**
+     * Send shuffle files to reduce slave
+     * * 
+     * @param inputMessage
+     * @param masterSocket
+     * @throws IOException
+     */
     private void sendShuffleFiles(String inputMessage, Socket masterSocket) throws IOException {
         LOGGER.log(Level.INFO, inputMessage);
         //0:SEND_SHUFFLE_FILE 1: dest_ip, 2: dest_port; 3:local_file_loc, 4:rmt_slave_to_slave_port
-        String[] inputMsgSplit = inputMessage.split(":");
-        IOCommons.sendFile(inputMsgSplit[3], inputMsgSplit[1], Integer.parseInt(inputMsgSplit[4]));
+        String[] inputMsgSplit = inputMessage.split(MSG_SPLITTER);
+        IOCommons.sendFile(inputMsgSplit[THREE], inputMsgSplit[ONE], Integer.parseInt(inputMsgSplit[FOUR]));
         PrintWriter out = new PrintWriter(masterSocket.getOutputStream(), true);
         out.println(Message.FILE_SENT);
     }
 
+    /**
+     * When slave is a reducer, it creates a directory for each key to receive the shuffle files.
+     * All the shuffle file for one key are saved in one directory 
+     * * 
+     */
     private void createShuffleDir() {
         new File(REDUCER_FOLDER_PATH + "/" + SlaveListener.shuffleDirCounter).mkdir();
         SlaveListener.shuffleDirCounter++;
     }
 
-    private void initialReduce(Socket masterSocket) throws IOException {
+    /**
+     * Once selected as a reducer, slave needs receive the client jar 
+     * @param masterSocket
+     * @throws IOException
+     */
+    private void preProcessReduce(Socket masterSocket) throws IOException {
         LOGGER.log(Level.INFO, "Selected as reducer..");
-        ServerSocket listener = new ServerSocket(REDUCER_LISTENER_PORT);
-
+        ServerSocket listener = new ServerSocket(MasterScheduler.MASTER_FT_PORT_REDUCER);
+        //Before the slave receives the jar, it prepares the directory for the entire reduce task 
+        //and initializes a socket for file transfer
+        new File(REDUCER_FOLDER_PATH).mkdirs();
         PrintWriter out = new PrintWriter(masterSocket.getOutputStream(), true);
         out.println(Message.READY_TO_RECEIVE_JAR);
-
-        receiveFile(listener, REDUCER_CLIENT_JAR_PATH);
-        // PrintWriter out = new PrintWriter(masterSocket.getOutputStream(), true);
+        IOCommons.receiveFile(listener, REDUCER_CLIENT_JAR_PATH);
         out.println(Message.JAR_RECEIVED);
-        // CLOSE AFTER ALL JAR AND SHUFFLE FILES ARE RECEIVED
-
         listener.close();
     }
 
-    public void receiveFile(ServerSocket listener, String outputFileName) throws IOException {
-
-        Socket sender = listener.accept();
-        InputStream in = sender.getInputStream();
-        FileOutputStream fos = new FileOutputStream(outputFileName);
-        IOUtils.copy(in, fos);
-        fos.close();
-        in.close();
-        sender.close();
+    /**
+     * Initiates a thread to run the reduce job 
+     * * 
+     * @param jobConfigClassname
+     * @throws NoSuchMethodException
+     * @throws InvocationTargetException
+     * @throws IllegalAccessException
+     * @throws InstantiationException
+     * @throws MalformedURLException
+     * @throws ClassNotFoundException
+     */
+    private void runReduce(String jobConfigClassname) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException, MalformedURLException, ClassNotFoundException {
+        SlaveListener.status = ConnectionTypes.BUSY;
+        new Thread(new SlaveReduceRunThread(REDUCER_CLIENT_JAR_PATH, getJobConf(REDUCER_CLIENT_JAR_PATH, jobConfigClassname))).start();
     }
 
-    private void sendKeyMappingFile() throws IOException {
-        Socket sender = new Socket(MasterScheduler.masterIP, SlaveListener.LISTENER_PORT);
-
-        FileInputStream inputStream = new FileInputStream(SHUFFLE_OUTPUT_FOLDER + (--numMapTasks) + "/" + Shuffle.KEY_FILENAME_MAPPING);
-        OutputStream outputStream = sender.getOutputStream();
-        IOUtils.copy(inputStream, outputStream);
-        inputStream.close();
-        outputStream.close();
-        sender.close();
-
-    }
-
-    private void runMapJobRequestHandler(Socket socket, String jobConfClassName) throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-
-        FileOutputStream fos = null, fos2 = null;
-        ServerSocket listener = new ServerSocket(LISTENER_PORT);
-        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-        out.println(Message.READY_FOR_JOB);
-
-        Socket sender = listener.accept();
-
-        try {
-            InputStream in = sender.getInputStream();
-            fos = new FileOutputStream(INPUT_CHUNK);
-            IOUtils.copy(in, fos);
-            fos.close();
-            in.close();
-            sender.close();
-            Socket sender2 = listener.accept();
-            in = sender2.getInputStream();
-            fos = new FileOutputStream(MAPPER_CLIENT_JAR_PATH);
-            IOUtils.copy(in, fos);
-            fos.close();
-            in.close();
-            sender2.close();
-            listener.close();
-          //  String jobConfClassName = "mapperImpl.AirlineJobConf";
-            JobConf jobConf = getJobConf(MAPPER_CLIENT_JAR_PATH, jobConfClassName);
-
-            SlaveListener.status = ConnectionTypes.BUSY;
-            //Run the job in new thread here
-
-            //String inputFilePath = "/home/srikar/Desktop/input/purchases.txt";
-            //String mapperClassname = "mapperImpl.AirlineMapper";
-
-            //TODO: NEED TO GENERATE ON FLY
-            //String keyClassName = "impl.StringWritable";
-            //String valueClassname = "impl.FloatWritable";
-//            boolean isCombinerSet = false;
-
-            new Thread(new SlaveMapRunThread(
-                    INPUT_CHUNK,
-                    MAP_OUTPUT_FILE_PATH,
-                    SHUFFLE_OUTPUT_FOLDER + numMapTasks++,
-                    MAPPER_CLIENT_JAR_PATH,
-                    jobConf))
-                    .start();
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+    /**
+     * Gets the Job config class name from an input message from the master 
+     * @param inputMessage
+     * @return
+     */
+    private String getJobConfigClassname(String inputMessage) {
+        String[] ipMsgSplit = inputMessage.split(":");
+        if(ipMsgSplit.length == TWO){
+            return ipMsgSplit[ONE];
         }
+        LOGGER.log(Level.SEVERE, "Set jobconfig file name in the msg from Master to Mapper Slave");
+        return null;
     }
 
+    /**
+     * Given the class name of JobConf class and the jar file, returns an object of JobConf
+     * * 
+     * @param clientJarPath
+     * @param jobConfClassName
+     * @return
+     * @throws java.net.MalformedURLException
+     * @throws ClassNotFoundException
+     * @throws NoSuchMethodException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     * @throws InstantiationException
+     */
     private JobConf getJobConf(String clientJarPath, String jobConfClassName) throws java.net.MalformedURLException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         JobConfFactory jobConfFactory = new JobConfFactory(clientJarPath, jobConfClassName);
         return jobConfFactory.getSingletonObject();
     }
 
-
-    private void statusRequestHandler(Socket socket) throws IOException {
-        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-        if (SlaveListener.status == ConnectionTypes.IDLE) {
-            out.println("Idle");
-        } else if (SlaveListener.status == ConnectionTypes.JOB_COMPLETE) {
-            //handle what happens after job is done.
-            out.println("Complete");
-        } else {
-            out.println("Busy");
-        }
-
-    }
-
-
+    //FOR TESTING
     public static void main(String[] args) throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
         //0:8087
         //SlaveListener listener = new SlaveListener(Integer.parseInt(args[0]), Integer.parseInt(args[1]));

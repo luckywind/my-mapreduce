@@ -2,10 +2,8 @@ package neu.mapreduce.io.sockets;
 
 import org.apache.commons.io.IOUtils;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.net.ServerSocket;
 import java.net.Socket;
 
 /**
@@ -21,4 +19,35 @@ public class IOCommons {
         is.close();
         fileSender.close();
     }
-}
+
+
+    public static void receiveFile(ServerSocket listener, String outputFileName) throws IOException {
+        Socket sender = listener.accept();
+        InputStream in = sender.getInputStream();
+        FileOutputStream fos = new FileOutputStream(outputFileName);
+        IOUtils.copy(in, fos);
+        fos.close();
+        in.close();
+        sender.close();
+    }
+
+    public static void shutDownBufferedReader(BufferedReader bufferedReader) {
+        if (bufferedReader != null) {
+            try {
+                bufferedReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void shutDownBufferedWriter(BufferedWriter bufferedWriter) {
+        if (bufferedWriter != null) {
+            try {
+                bufferedWriter.flush();
+                bufferedWriter.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }}

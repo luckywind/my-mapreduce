@@ -1,11 +1,10 @@
 package neu.mapreduce.core.mapper;
 
-import api.JobConf;
 import api.MyContext;
-import neu.mapreduce.core.factory.JobConfFactory;
 import neu.mapreduce.core.factory.MapFactory;
 import neu.mapreduce.core.factory.WriteComparableFactory;
 import neu.mapreduce.core.shuffle.Shuffle;
+import neu.mapreduce.io.sockets.IOCommons;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -13,117 +12,74 @@ import java.net.MalformedURLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
-/**
- * Created by mit on 4/2/15.
- */
 public class MapRun {
 
     private final static Logger LOGGER = Logger.getLogger(MapRun.class.getName());
-//    public final static String SHUFFLE_OUTPUT_PATH = "/home/srikar/Desktop/shuffle";
 
-//    public static void main(String [] args){
-//
-//        String inputFilePath = "/home/srikar/Desktop/input/purchases.txt";
-//        String mapperClassname = "mapperImpl.AirlineMapper";
-//
-//        //TODO: NEED TO GENERATE ON FLY
-//        String outputFilePath = "/home/srikar/Desktop/map-op-4.txt";
-//        String clientJarPath = "/home/srikar/Desktop/project-jar/client-1.3-SNAPSHOT-jar-with-dependencies.jar";
-//        String keyClassName = "impl.StringWritable";
-//        String valueClassname = "impl.FloatWritable";
-//        boolean isCombinerSet = false;
-//
-//        new MapRun().mapRun(inputFilePath, mapperClassname, outputFilePath, clientJarPath, keyClassName, valueClassname, isCombinerSet);
-//    }
-
+    /**
+     * Runs the map function for each line from the input file 
+     * and initiates the shuffle phase
+     * *
+     * @param inputFilePath
+     * @param outputFilePath
+     * @param shuffleOutputDir
+     * @param clientJarPath
+     * @param mapperClassname
+     * @param keyInputClassName
+     * @param valueInputClassName
+     * @param keyOutputClassName
+     * @param valueOutputClassname
+     * @param isCombinerSet
+     */
     public void mapRun(String inputFilePath, String outputFilePath, String shuffleOutputDir, String clientJarPath, String mapperClassname, String keyInputClassName, String valueInputClassName, String keyOutputClassName, String valueOutputClassname, boolean isCombinerSet) {
 
-//        //TODO:THESE SHOULD BE INPUT PARAMETER
-//        //TODO:FROM CLIENT
-//        String inputFilePath = "/home/srikar/Desktop/input/purchases.txt";
-//        String mapperClassname = "mapperImpl.AirlineMapper";
-//
-//        //TODO: NEED TO GENERATE ON FLY
-//        String outputFilePath = "/home/srikar/Desktop/map-op-4.txt";
-//        String clientJarPath = "/home/srikar/Desktop/project-jar/client-1.3-SNAPSHOT-jar-with-dependencies.jar";
-//
-//            URLClassLoader urlClassLoader = new URLClassLoader(new URL[]{aFile.toURI().toURL()});
-
-//            Class clientClass = Class.forName(mapperClassname);
-//            String jobConfClassName = "mapperImpl.AirlineJobConf";
-//            JobConfFactory jobConfFactory = new JobConfFactory(clientJarPath, jobConfClassName );
-//            JobConf jobConf = jobConfFactory.getSingletonObject();
-//            String keyClassName = jobConf.getMapKeyInputClassName();
-////            String keyClassName = "impl.LongWritable";
-
-
-//        File aFile = new File(clientJarPath);
-//            String valueClassName = "impl.StringWritable";
-
         try {
-
+            //Creates a factory to get the object of map given the filename 
+            // and location of jar which holds the class file
             MapFactory mapFactory = new MapFactory(clientJarPath, mapperClassname);
-            Class keyClassType = Class.forName(keyInputClassName);
-            WriteComparableFactory keyFactory = new WriteComparableFactory(keyClassType);
-
-            Class valueClassType = Class.forName(valueInputClassName);
-            WriteComparableFactory valueFactory = new WriteComparableFactory(valueClassType);
-            BufferedReader br = null;
-            BufferedWriter bw = null;
+            // Creates the factory for mapper input key and value types
+            WriteComparableFactory keyFactory = new WriteComparableFactory(Class.forName(keyInputClassName));
+            WriteComparableFactory valueFactory = new WriteComparableFactory(Class.forName(valueInputClassName));
+            BufferedReader brInputChunk = null;
+            BufferedWriter bwOutputOfMapper = null;
+            
             try {
-                br = new BufferedReader(new FileReader(new File(inputFilePath)));
-                bw = new BufferedWriter(new FileWriter(new File(outputFilePath)));
-                MyContext myContext = new MyContext(bw);
+                brInputChunk = new BufferedReader(new FileReader(new File(inputFilePath)));
+                bwOutputOfMapper = new BufferedWriter(new FileWriter(new File(outputFilePath)));
+                MyContext myContext = new MyContext(bwOutputOfMapper);
 
                 String line;
-                int counter = 0;
-                while ((line = br.readLine()) != null) {
-
+                int lineCounter = 0;
+                while ((line = brInputChunk.readLine()) != null) {
+                    //Call map function on each line in the input data
                     (mapFactory.getSingletonObject()).map(
-                            keyFactory.getNewInstance().deserialize(counter + ""), valueFactory.getNewInstance().deserialize(line), myContext);
-                    counter++;
+                            keyFactory.getNewInstance().deserialize(Integer.toString(lineCounter++)),
+                            valueFactory.getNewInstance().deserialize(line), 
+                            myContext);
                 }
+            } catch (FileNotFoundException e){
+                LOGGER.log(Level.SEVERE,"Input data file not found");
+            } catch (IOException e){
+                LOGGER.log(Level.SEVERE,"IOException in reading input data file");
             } finally {
-                if (bw != null) {
-                    try {
-                        bw.flush();
-                        bw.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-                if (br != null) {
-                    try {
-                        br.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-
+                IOCommons.shutDownBufferedWriter(bwOutputOfMapper);
+                IOCommons.shutDownBufferedReader(brInputChunk);
             }
-        } catch (IllegalAccessException e) {
+        } catch (IllegalAccessException | InstantiationException | ClassNotFoundException | 
+                NoSuchMethodException | InvocationTargetException e) {
+            LOGGER.log(Level.SEVERE, "Error in creating factory for either mapper or mapper-input key or mapper-input value class");
             e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
+        } catch (MalformedURLException e) {
+            LOGGER.log(Level.SEVERE, "Error in creating factory for mapper class");
             e.printStackTrace();
         }
 
-            LOGGER.log(Level.INFO, "Completed map phase. Starting shuffle.");
+        LOGGER.log(Level.INFO, "Completed map phase. Starting shuffle.");
 
-        /*SHUFFLE*/
-            new Shuffle().shuffle(outputFilePath, shuffleOutputDir, keyOutputClassName, valueOutputClassname, clientJarPath, isCombinerSet);
-            LOGGER.log(Level.INFO, "Completed shuffle phase.");
-
+        // Kick of shuffle phase
+        new Shuffle().shuffle(outputFilePath, shuffleOutputDir, keyOutputClassName, valueOutputClassname, clientJarPath, isCombinerSet);
+        LOGGER.log(Level.INFO, "Completed shuffle phase.");
         }
+
 
 }

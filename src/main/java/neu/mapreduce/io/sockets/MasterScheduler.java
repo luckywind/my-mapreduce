@@ -21,12 +21,17 @@ import java.util.logging.Logger;
  */
 public class MasterScheduler {
 
+    public static final int MASTER_FT_PORT_MAPPER = 6060;
+    public static final int MASTER_FT_PORT_REDUCER = 9061;
+    
     private static final Logger LOGGER = Logger.getLogger(MasterScheduler.class.getName());
    // private static final Integer NUM_REDUCERS = 1;
-   public static final String masterIP = "localhost";
-    private final HashMap<String, Integer> slaveToSlavePorts;
+    public static final String masterIP = "localhost";
+    public static int keyMappingFileCounter = 0;
+    public static final String KEY_MAPPING_FILE = Constants.HOME+Constants.USER+Constants.MR_RUN_FOLDER+Constants.MASTER_FOLER +"/keyMapping";
 
 
+    private  HashMap<String, Integer> slaveToSlavePorts;
     private ArrayList<String> fileSplits;
     private String inputJar;
     private HashMap<String, Socket> slaves;
@@ -37,8 +42,8 @@ public class MasterScheduler {
     private String freeSlaveID;
     private String curSplit;
     private HashMap<String, ArrayList<String>> keyFileMapping;
-    public static int keyMappingFileCounter = 0;
-    public static final String KEY_MAPPING_FILE = Constants.HOME+Constants.USER+Constants.MR_RUN_FOLDER+Constants.MASTER_FOLER +"/keyMapping";
+
+
 
     public MasterScheduler(ArrayList<String> fileSplits, String inputJar, HashMap<String, Socket> slaves, String jobConfClassName, HashMap<String, Integer> slaveToSlavePorts) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException, MalformedURLException, ClassNotFoundException {
         this.fileSplits = fileSplits;
@@ -52,7 +57,11 @@ public class MasterScheduler {
         this.slaveToSlavePorts = slaveToSlavePorts;
     }
 
-    public void schedule() throws IOException {
+    /**
+     * Schedules and runs the Map job on free slaves.
+     * @throws IOException
+     */
+    public void scheduleMap() throws IOException {
         LOGGER.log(Level.INFO, "Number of slaves: " + this.slaves.size());
         boolean isCompleted = false;
 
@@ -69,35 +78,134 @@ public class MasterScheduler {
 
         LOGGER.log(Level.INFO, "Mapper complete.. Requesting for key-mapping files");
         //Start reducer here
-        receiveKeyMappingFiles();
+        ArrayList<HashMap<String, ArrayList<String>>> listSmallerHashMaps = receiveKeyMappingFiles();
+        LOGGER.log(Level.INFO, listSmallerHashMaps.size()+" equals "+this.jobConf.getNumReducers()+":: # of hashmaps vs # of reducers");
+        LOGGER.log(Level.INFO, "Starting reducer/s: # of reducers:"+this.jobConf.getNumReducers());
+        scheduleReducer(listSmallerHashMaps);
         System.out.println("Success!");
     }
 
-    private void receiveKeyMappingFiles() throws IOException {
+    /**
+     *Allocates the map job to a free slave  * 
+     * @throws IOException
+     */
+    private void allocateMapTask() throws IOException {
+        //Find a free slave
+        if (findFreeSlave()) {
+            LOGGER.log(Level.INFO, "Allocation map task");
 
-        for (String slaveID : this.job.getMapperSlaveID()) {
-            Socket slaveSocket = slaves.get(slaveID);
-            PrintWriter out = new PrintWriter(slaveSocket.getOutputStream(), true);
-            out.println(Message.SEND_KEY_MAPPING_FILE_MESSAGE);
-            ServerSocket listener = new ServerSocket(SlaveListener.LISTENER_PORT);
-            Socket listenerSocket = listener.accept();
-
-            InputStream fileInputStream = listenerSocket.getInputStream();
-            OutputStream outputStream = new FileOutputStream(KEY_MAPPING_FILE+(keyMappingFileCounter++));
-            IOUtils.copy(fileInputStream, outputStream);
-
-            // method to update hash map for key, list of files
-            updateKeyMappingHashMap(slaveID);
-            listenerSocket.close();
-            listener.close();
-
+            this.job.getMapperSlaveID().add(this.freeSlaveID);
+            //Allocate job to slave
+            this.curSplit = fileSplits.get(0);
+            fileSplits.remove(0);
+            initiateMapSlaveJob();
         }
-        ArrayList<HashMap<String, ArrayList<String>>> listSmallerHashmaps = splitKeyMapping(this.keyFileMapping, this.jobConf.getNumReducers());
-        LOGGER.log(Level.INFO, listSmallerHashmaps.size()+" equals "+this.jobConf.getNumReducers()+":: # of hashmaps vs # of reducers");
-        LOGGER.log(Level.INFO, "Starting reducer/s: # of reducers:"+this.jobConf.getNumReducers());
-        scheduleReducer(listSmallerHashmaps);
     }
 
+
+    /**
+     * Checks if all allocated jobs are complete.
+     * * @param listSlaveID
+     * @return true if all jobs are complete, false otherwise. 
+     * @throws IOException
+     */
+    private boolean checkForCompletion(ArrayList<String> listSlaveID) throws IOException {
+        String status;
+        boolean isCompleted = true;
+        for (String slaveID : new HashSet<>(listSlaveID)) {
+            Socket slaveSocket = slaves.get(slaveID);
+            PrintWriter out = new PrintWriter(slaveSocket.getOutputStream(), true);
+            BufferedReader in = new BufferedReader(
+                    new InputStreamReader(slaveSocket.getInputStream()));
+            out.println(Message.STATUS);
+            status = in.readLine();
+            if(status.equals("Complete")){
+                LOGGER.log(Level.INFO, "Frome checkForCompletion(): Master commands slave to change status from complete to idle");
+                out.println(Message.CHANGE_STATUS);
+            } else if (status.equals("Busy")) {
+                isCompleted = false;
+            }
+        }
+        return isCompleted;
+    }
+
+    /**
+     * Finds a free slave* 
+     * @return set freeSlaveId if free slave found and returns true, else return false.
+     * @throws IOException
+     */
+    private boolean findFreeSlave() throws IOException {
+        boolean slaveFound = false;
+        for (String slaveID : slaves.keySet()) {
+            Socket slaveSocket = slaves.get(slaveID);
+            PrintWriter out = new PrintWriter(slaveSocket.getOutputStream(), true);
+            BufferedReader in = new BufferedReader(
+                    new InputStreamReader(slaveSocket.getInputStream()));
+            out.println(Message.STATUS);
+            String slaveStatus = in.readLine();
+            if (slaveStatus.equals("Idle")) {
+                slaveFound = true;
+            }else if(slaveStatus.equals("Complete")){
+                LOGGER.log(Level.INFO, "From findFreeSlave(): Master commands slave to change status from complete to idle");
+                out.println(Message.CHANGE_STATUS);
+            }
+            if(slaveFound){
+                this.freeSlaveID = slaveID;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Sends data to mapper slave and sends a message to start the job * 
+     * @throws IOException
+     */
+    private void initiateMapSlaveJob() throws IOException {
+        Socket slaveSocket = slaves.get(this.freeSlaveID);
+        PrintWriter out = new PrintWriter(slaveSocket.getOutputStream(), true);
+        BufferedReader in = new BufferedReader(
+                new InputStreamReader(slaveSocket.getInputStream()));
+        out.println(Message.RUN_JOB +":"+this.jobConfClassName);
+        in.readLine();
+        //Send split
+        sendFile(this.curSplit, getIp(this.freeSlaveID), MASTER_FT_PORT_MAPPER);
+        //Send jar;
+        sendFile(this.inputJar, getIp(this.freeSlaveID), MASTER_FT_PORT_MAPPER);
+    }
+
+    /**
+     * Gets the key mapping files from the shuffler.* 
+     * @throws IOException
+     */
+    private  ArrayList<HashMap<String, ArrayList<String>>> receiveKeyMappingFiles() throws IOException {
+
+        for (String slaveID : this.job.getMapperSlaveID()) {
+            requestKeyMappingFile(slaveID);
+            ServerSocket listener = new ServerSocket(MASTER_FT_PORT_MAPPER);
+            IOCommons.receiveFile(listener, KEY_MAPPING_FILE+(keyMappingFileCounter++));
+            updateKeyMappingHashMap(slaveID);
+        }
+        ArrayList<HashMap<String, ArrayList<String>>> listSmallerHashmaps = splitKeyMapping(this.keyFileMapping, this.jobConf.getNumReducers());
+        return listSmallerHashmaps;
+    }
+
+    /**
+     * Requests slave to send the keyMapping file* 
+     * @param slaveID
+     * @throws IOException
+     */
+    private void requestKeyMappingFile(String slaveID) throws IOException {
+        Socket slaveSocket = slaves.get(slaveID);
+        PrintWriter out = new PrintWriter(slaveSocket.getOutputStream(), true);
+        out.println(Message.SEND_KEY_MAPPING_FILE_MESSAGE);
+    }
+
+    /**
+     * Updates the local keyMap with values from the shuffle key map files sent by mappers* 
+     * @param slaveID
+     * @throws IOException
+     */
     private void updateKeyMappingHashMap(String slaveID) throws IOException {
         BufferedReader bufferedReader = new BufferedReader(new FileReader(KEY_MAPPING_FILE+(keyMappingFileCounter-1)));
         String line;
@@ -111,28 +219,61 @@ public class MasterScheduler {
             keyFileMapping.get(splitLine[0]).add(slaveID + ":" + splitLine[1]);
         }
 
-        
+
     }
 
+    /**
+     * Splits the keys in keyMap to be sent to different reducers. Will return the same hashmap if numReducers = 1* 
+     * @param keyFileMapping
+     * @param numReducers
+     * @return list of smaller hash maps with size = numReducers
+     */
+    private ArrayList<HashMap<String, ArrayList<String>>> splitKeyMapping(HashMap<String, ArrayList<String>> keyFileMapping, int numReducers) {
+
+        ArrayList<HashMap<String, ArrayList<String>>> listKeyFileMapping = new ArrayList<HashMap<String, ArrayList<String>>>();
+        for (int i = 0; i < numReducers; i++) {
+            listKeyFileMapping.add(new HashMap<String, ArrayList<String>>());
+        }
+        int counter = 0;
+        for (String key : keyFileMapping.keySet()) {
+            listKeyFileMapping.get(counter % numReducers).put(key, keyFileMapping.get(key));
+            counter++;
+        }
+        LOGGER.log(Level.INFO, "Created smaller key-file mapping for each reducer");
+
+        return listKeyFileMapping;
+    }
+
+    /**
+     * *
+     * @param listSmallerHashmaps
+     * @throws IOException
+     */
     private void scheduleReducer(ArrayList<HashMap<String, ArrayList<String>>> listSmallerHashmaps) throws IOException {
         boolean isCompleted = false;
 
         while (!isCompleted) {
-            //Do the mapper phase
+            //Do the reduce phase
             if (!(listSmallerHashmaps.isEmpty())) {
                 //Allocate task
                 allocateReduceTask(listSmallerHashmaps);
             } else {
-                //Check for mapper completion
+                //Check for reduce completion
                 isCompleted = checkForCompletion(job.getReducerSlaveID());
             }
         }
     }
 
+    /**
+     * Allocates tasks to reducers. * 
+     * @param keyShuffleFileInfoMapping
+     * @throws IOException
+     */
     private void allocateReduceTask(ArrayList<HashMap<String, ArrayList<String>>> keyShuffleFileInfoMapping) throws IOException {
-        //find free slave
+        
         //update the job.reducers
-        //send the client jar
+        
+        //find free slave
         if (findFreeSlave()) {
             LOGGER.log(Level.INFO, "Allocating one reduce task");
 
@@ -159,7 +300,7 @@ public class MasterScheduler {
         }
         LOGGER.log(Level.INFO, "Reducer is ready to receive jar");
 
-        sendFile(this.inputJar, getIp(this.freeSlaveID), SlaveListener.REDUCER_LISTENER_PORT);
+        sendFile(this.inputJar, getIp(this.freeSlaveID), MASTER_FT_PORT_REDUCER);
         while(!reducerIn.readLine().equals(Message.JAR_RECEIVED)){
 
         }
@@ -181,80 +322,12 @@ public class MasterScheduler {
                 LOGGER.log(Level.INFO, "File sent. File details: " + fileLoc);
             }
         }
-        reducerOut.println(Message.RUN_REDUCE+":"+jobConfClassName);
+        reducerOut.println(Message.RUN_REDUCE + ":" + jobConfClassName);
     }
 
     private String getDestId(String fileLoc) {
         String[] fileSplit = fileLoc.split(":");
         return (fileSplit[0] + ":" + fileSplit[1]);
-    }
-
-
-    private ArrayList<HashMap<String, ArrayList<String>>> splitKeyMapping(HashMap<String, ArrayList<String>> keyFileMapping, int numReducers) {
-
-        ArrayList<HashMap<String, ArrayList<String>>> listKeyFileMapping = new ArrayList<HashMap<String, ArrayList<String>>>();
-        for (int i = 0; i < numReducers; i++) {
-            listKeyFileMapping.add(new HashMap<String, ArrayList<String>>());
-        }
-        int counter = 0;
-        for (String key : keyFileMapping.keySet()) {
-            listKeyFileMapping.get(counter % numReducers).put(key, keyFileMapping.get(key));
-            counter++;
-        }
-        LOGGER.log(Level.INFO, "Created smaller key-file mapping for each reducer");
-
-        return listKeyFileMapping;
-    }
-
-
-    private boolean checkForCompletion(ArrayList<String> listSlaveID) throws IOException {
-        String status;
-        boolean isCompleted = true;
-        for (String slaveID : new HashSet<>(listSlaveID)) {
-            Socket slaveSocket = slaves.get(slaveID);
-            PrintWriter out = new PrintWriter(slaveSocket.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(slaveSocket.getInputStream()));
-            out.println(Message.STATUS);
-            status = in.readLine();
-            if(status.equals("Complete")){
-                //Handle what to do with successful mappers and the data file locations.
-                LOGGER.log(Level.INFO, "Frome checkForCompletion(): Master commands slave to change status from complete to idle");
-                out.println(Message.CHANGE_STATUS);
-            } else if (status.equals("Busy")) {
-                isCompleted = false;
-            } 
-        }
-        return isCompleted;
-    }
-
-
-    private void allocateMapTask() throws IOException {
-        //Find a free slave
-        if (findFreeSlave()) {
-            LOGGER.log(Level.INFO, "Allocation map task");
-
-            this.job.getMapperSlaveID().add(this.freeSlaveID);
-            //Allocate job to slave
-            this.curSplit = fileSplits.get(0);
-            fileSplits.remove(0);
-            initiateSlaveJob();
-        }
-    }
-
-    private void initiateSlaveJob() throws IOException {
-        Socket slaveSocket = slaves.get(this.freeSlaveID);
-        PrintWriter out = new PrintWriter(slaveSocket.getOutputStream(), true);
-        BufferedReader in = new BufferedReader(
-                new InputStreamReader(slaveSocket.getInputStream()));
-        out.println(Message.RUN_JOB +":"+this.jobConfClassName);
-        in.readLine();
-        //while(!(in.readLine().equals("readyForJob"))) {
-        //}
-        //Send split
-        sendFile(this.curSplit, getIp(this.freeSlaveID), 6060);
-        //Send jar;
-        sendFile(this.inputJar, getIp(this.freeSlaveID), 6060);
     }
 
     private void sendFile(String fileName, String ip, int port) throws IOException {
@@ -270,30 +343,6 @@ public class MasterScheduler {
     private String getIp(String freeSlaveID) {
         String[] slaveIdSplit = freeSlaveID.split(":");
         return slaveIdSplit[0];
-    }
-
-    private boolean findFreeSlave() throws IOException {
-        boolean slaveFound = false;
-        for (String slaveID : slaves.keySet()) {
-            Socket slaveSocket = slaves.get(slaveID);
-            PrintWriter out = new PrintWriter(slaveSocket.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(slaveSocket.getInputStream()));
-            out.println(Message.STATUS);
-            String slaveStatus = in.readLine();
-            if (slaveStatus.equals("Idle")) {
-                slaveFound = true;
-            }else if(slaveStatus.equals("Complete")){
-                LOGGER.log(Level.INFO, "From findFreeSlave(): Master commands slave to change status from complete to idle");
-                out.println(Message.CHANGE_STATUS);
-               // slaveFound = true;
-            }
-            if(slaveFound){
-                this.freeSlaveID = slaveID;
-                return true;
-            }
-        }
-        return false;
     }
 
 }
