@@ -184,6 +184,7 @@ public class MasterScheduler {
             requestKeyMappingFile(slaveID);
             ServerSocket listener = new ServerSocket(MASTER_FT_PORT_MAPPER);
             IOCommons.receiveFile(listener, KEY_MAPPING_FILE+(keyMappingFileCounter++));
+            listener.close();
             updateKeyMappingHashMap(slaveID);
         }
         ArrayList<HashMap<String, ArrayList<String>>> listSmallerHashmaps = splitKeyMapping(this.keyFileMapping, this.jobConf.getNumReducers());
