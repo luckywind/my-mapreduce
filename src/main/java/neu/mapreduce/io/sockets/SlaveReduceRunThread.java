@@ -2,7 +2,7 @@ package neu.mapreduce.io.sockets;
 
 import api.JobConf;
 import neu.mapreduce.core.reducer.ReduceRun;
-import neu.mapreduce.core.sort.MasterShuffleMerge;
+import neu.mapreduce.core.sort.ExternalSort;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -36,13 +36,13 @@ public class SlaveReduceRunThread implements Runnable {
 
         ArrayList<String> listOfMergedFilePath = new ArrayList<>();
         String[] subDirectories = getAllSubDirectories(SlaveListener.REDUCER_FOLDER_PATH);
-        MasterShuffleMerge masterShuffleMerge = new MasterShuffleMerge();
+        ExternalSort externalSort = new ExternalSort();
         for (String eachDirectory : subDirectories) {
             try {
                 String currentDirPath = SlaveListener.REDUCER_FOLDER_PATH + "/" + eachDirectory;
                 // merge all the files after shuffle phase
-                masterShuffleMerge.mergeAllFileInDir(currentDirPath, jobConf.getMapKeyOutputClassName(), jobConf.getMapValueOutputClassName());
-                listOfMergedFilePath.add(currentDirPath + "/" + MasterShuffleMerge.OUTPUT_FILE_NAME);
+                externalSort.mergeAllFileInDir(currentDirPath, jobConf.getMapKeyOutputClassName(), jobConf.getMapValueOutputClassName());
+                listOfMergedFilePath.add(currentDirPath + "/" + ExternalSort.OUTPUT_FILE_NAME);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }

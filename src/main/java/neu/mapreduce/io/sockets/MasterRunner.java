@@ -1,17 +1,26 @@
 package neu.mapreduce.io.sockets;
 
 import neu.mapreduce.io.fileSplitter.SplitFile;
+import neu.mapreduce.node.NodeDAO;
+import neu.mapreduce.node.NodeRegistration;
+
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- * Created by Amitash on 4/20/15.
+ * Created by Amitash on 4/20/15. Modified by Srikar, Vishal, Mit
  */
 public class MasterRunner
 {
+    private final static Logger LOGGER = Logger.getLogger(MasterRunner.class.getName());
+
+
     private final String jobConfClassName;
     int splitSizeInMB;
     ArrayList<String> fileSplits;
@@ -31,13 +40,15 @@ public class MasterRunner
     }
 
     public void addSlaves() throws IOException {
-        //TODO: Should access slave file given online. Remove constant below.
-        slaves.put("localhost:8087", new Socket("localhost", 8087));
-        slaves.put("localhost:8083", new Socket("localhost", 8083));
-        slaves.put("localhost:8090", new Socket("localhost", 8090));
-        slaveToSlavePorts.put("localhost:8087", 7062);
-        slaveToSlavePorts.put("localhost:8083", 7067);
-        slaveToSlavePorts.put("localhost:8090", 7090);
+        ArrayList<NodeDAO> x = NodeRegistration.getAllNodes();
+        Iterator<NodeDAO> it = x.iterator();
+        while (it.hasNext()) {
+            NodeDAO n = it.next();
+            //System.out.println(NodeDAO.getURL(n));
+            String ipPort = n.getIp() + ":" + n.getMessagingServicePort();
+            slaves.put(ipPort, new Socket(n.getIp(), n.getMessagingServicePort()));
+            slaveToSlavePorts.put(ipPort, n.getFileTransferPort());
+        }
     }
 
     public void runJob() throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
@@ -46,7 +57,7 @@ public class MasterRunner
         System.out.println("Complete");
     }
     
-    public static void main(String[] args) throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    /*public static void main(String[] args) throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         String inputFile = Constants.HOME + Constants.USER + Constants.CLIENT_FOLDER + "/sample.txt";
         String CLIENT_JAR_WITH_DEPENDENCIES_JAR = "/client-1.4-SNAPSHOT-jar-with-dependencies.jar";
         String inputJar =  Constants.HOME + Constants.USER + Constants.CLIENT_FOLDER + CLIENT_JAR_WITH_DEPENDENCIES_JAR;
@@ -54,5 +65,18 @@ public class MasterRunner
         int splitSizeInMB = 64;
         MasterRunner masterDaemon = new MasterRunner(inputFile, inputJar, jobConfClassName, splitSizeInMB);
         masterDaemon.runJob();
+    }*/
+    public static void main(String[] args) throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+        long start = System.currentTimeMillis();
+        String inputFile = Constants.HOME + Constants.USER + Constants.CLIENT_FOLDER + "/inputData.txt";
+        String CLIENT_JAR_WITH_DEPENDENCIES_JAR = "/client-1.4-SNAPSHOT-jar-with-dependencies.jar";
+        String inputJar = Constants.HOME + Constants.USER + Constants.CLIENT_FOLDER + CLIENT_JAR_WITH_DEPENDENCIES_JAR;
+        String jobConfClassName = "mapperImpl.AirlineJobConf";
+        int splitSizeInMB = 64;
+        MasterRunner masterDaemon = new MasterRunner(inputFile, inputJar, jobConfClassName, splitSizeInMB);
+        masterDaemon.runJob();
+        long end = System.currentTimeMillis();
+        NodeRegistration.truncateRegistry();
+        LOGGER.log(Level.INFO, "It ran for " + (end - start) + " milliseconds");
     }
 }

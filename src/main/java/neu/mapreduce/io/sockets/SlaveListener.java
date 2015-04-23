@@ -3,6 +3,7 @@ package neu.mapreduce.io.sockets;
 import api.JobConf;
 import neu.mapreduce.core.factory.JobConfFactory;
 import neu.mapreduce.core.shuffle.ShuffleRun;
+import neu.mapreduce.node.NodeDAO;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -299,11 +300,21 @@ public class SlaveListener {
         return jobConfFactory.getSingletonObject();
     }
 
-    //FOR TESTING
+    /*//FOR TESTING
     public static void main(String[] args) throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
         //0:8087
         //SlaveListener listener = new SlaveListener(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
         SlaveListener listener = new SlaveListener(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
+        listener.startListening();
+    }*/
+
+    public static void main(String[] args) throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
+        //0:8087
+        //SlaveListener listener = new SlaveListener(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
+        NodeDAO nodeDAO = new NodeDAO();
+        nodeDAO.registerThisNode();
+
+        SlaveListener listener = new SlaveListener(nodeDAO.getFileTransferPort(),nodeDAO.getMessagingServicePort());
         listener.startListening();
     }
 }

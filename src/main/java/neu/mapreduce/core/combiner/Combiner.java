@@ -1,8 +1,6 @@
 package neu.mapreduce.core.combiner;
 
 import api.MyContext;
-import api.MyWriteComparable;
-import neu.mapreduce.core.factory.CombinerFactory;
 import neu.mapreduce.core.factory.ReducerFactory;
 import neu.mapreduce.core.factory.WriteComparableFactory;
 
@@ -21,6 +19,21 @@ public class Combiner {
     private final static Logger LOGGER = Logger.getLogger(Combiner.class.getName());
     private final static String KEY_VALUE_SEPARATOR = "\n";
 
+    /**
+     * *
+     * @param key Key on which the combiner should be performed
+     * @param valueIterator Iterator of values
+     * @param keyFactory    Instance of key
+     * @param clientJarPath
+     * @naram combinerClassName
+     * @param bw
+     * @throws NoSuchMethodException
+     * @throws InvocationTargetException
+     * @throws IllegalAccessException
+     * @throws InstantiationException
+     * @throws MalformedURLException
+     * @throws ClassNotFoundException
+     */
     public void combinerRun(String key,
                             Iterator valueIterator,
                             WriteComparableFactory keyFactory,

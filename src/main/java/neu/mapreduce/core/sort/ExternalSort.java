@@ -17,13 +17,13 @@ import java.util.logging.Logger;
 /**
  * Created by Amitash, Mit on 4/8/15.
  */
-public class MasterShuffleMerge {
-    private final static Logger LOGGER = Logger.getLogger(MasterShuffleMerge.class.getName());
+public class ExternalSort {
+    private final static Logger LOGGER = Logger.getLogger(ExternalSort.class.getName());
 
     public static String OUTPUT_FILE_NAME = "shuffleMerge";
     int fileId;
 
-    public MasterShuffleMerge() {
+    public ExternalSort() {
         this.fileId = 0;
     }
 
