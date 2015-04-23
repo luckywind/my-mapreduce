@@ -68,7 +68,7 @@ public class MasterRunner
     }*/
     public static void main(String[] args) throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         long start = System.currentTimeMillis();
-        String inputFile = Constants.HOME + Constants.USER + Constants.CLIENT_FOLDER + "/inputData.txt";
+        String inputFile = Constants.HOME + Constants.USER + Constants.CLIENT_FOLDER + "/sample.txt";
         String CLIENT_JAR_WITH_DEPENDENCIES_JAR = "/client-1.4-SNAPSHOT-jar-with-dependencies.jar";
         String inputJar = Constants.HOME + Constants.USER + Constants.CLIENT_FOLDER + CLIENT_JAR_WITH_DEPENDENCIES_JAR;
         String jobConfClassName = "mapperImpl.AirlineJobConf";

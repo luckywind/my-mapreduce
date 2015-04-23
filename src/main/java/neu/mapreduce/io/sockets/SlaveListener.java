@@ -75,7 +75,8 @@ public class SlaveListener {
      * @throws IllegalAccessException
      */
     public void startListening() throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-        System.out.println("Listening...On port: "+this.port+" & "+this.slaveToSlavePort);
+        System.out.println("Listening for messages on port: "+this.port);
+        System.out.println("Listening for File transfer on port: "+this.slaveToSlavePort);
         ServerSocket listener = new ServerSocket(port);
         while (true) {
             Socket socket = listener.accept();
@@ -119,7 +120,7 @@ public class SlaveListener {
         } else if (inputMessage.equals(Message.INITIAL_REDUCE)) {
             preProcessReduce(socket);
         } else if (inputMessage.equals(Message.INITIAL_GET_KEY_SHUFFLE)) {
-            createShuffleDir();
+            createShuffleDir(socket);
         } else if (inputMessage.startsWith(Message.SEND_SHUFFLE_FILE)) {
             sendShuffleFiles(inputMessage, socket);
         } else if (inputMessage.startsWith(Message.RUN_REDUCE)) {
@@ -227,11 +228,13 @@ public class SlaveListener {
     /**
      * When slave is a reducer, it creates a directory for each key to receive the shuffle files.
      * All the shuffle file for one key are saved in one directory 
-     * * 
+     * * createShuffleDir
      */
-    private void createShuffleDir() {
+    private void createShuffleDir(Socket masterSocket) throws IOException {
         new File(REDUCER_FOLDER_PATH + "/" + SlaveListener.shuffleDirCounter).mkdir();
         SlaveListener.shuffleDirCounter++;
+        PrintWriter out = new PrintWriter(masterSocket.getOutputStream(), true);
+        out.println(Message.JAR_RECEIVED);
     }
 
     /**

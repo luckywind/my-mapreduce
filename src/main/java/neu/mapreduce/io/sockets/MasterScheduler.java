@@ -309,6 +309,9 @@ public class MasterScheduler {
         for (String key : keyShuffleFileInfoMapping.keySet()) {
             //Slave should open a socket and wait for files. It should create a dir for each key
             reducerOut.println(Message.INITIAL_GET_KEY_SHUFFLE);
+            while(!reducerIn.readLine().equals(Message.JAR_RECEIVED)){
+
+            }
             for (String fileLoc : keyShuffleFileInfoMapping.get(key)) {
                 String destId = getDestId(fileLoc);
                 Socket shuffleSocket = slaves.get(destId);
