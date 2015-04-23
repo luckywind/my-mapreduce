@@ -38,9 +38,15 @@ public class SlaveToSlaveFileTransferThread implements Runnable {
         }
         while (true){
             try {
+
+                Socket sender = serverSocket.accept();
+                InputStream in = sender.getInputStream();
                 int shuffleDirCounter = SlaveListener.shuffleDirCounter-1;
-                String outputFileName = SlaveListener.REDUCER_FOLDER_PATH + "/" + shuffleDirCounter +"/"+fileCounter++;
-                IOCommons.receiveFile(serverSocket, outputFileName);
+                FileOutputStream fos = new FileOutputStream(SlaveListener.REDUCER_FOLDER_PATH + "/" + shuffleDirCounter +"/"+fileCounter++);
+                IOUtils.copy(in, fos);
+                fos.close();
+                in.close();
+                sender.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
