@@ -2,7 +2,7 @@ package neu.mapreduce.core.shuffle;
 
 import api.JobConf;
 import api.MyWriteComparable;
-import neu.mapreduce.core.combiner.Combiner;
+import neu.mapreduce.core.combiner.CombinerRun;
 import neu.mapreduce.core.factory.WriteComparableFactory;
 import neu.mapreduce.io.sockets.IOCommons;
 
@@ -115,7 +115,7 @@ public class ShuffleRun {
             BufferedWriter shuffleFileBW = new BufferedWriter(new FileWriter(new File(locationShuffleFile)));
             Collections.sort(keyListOfValue.get(key));
             if (jobConf.isIsCombinerSet()) {
-                new Combiner().combinerRun(key, keyListOfValue.get(key).iterator(), mapperOutputKeyFactory, clientJarPath, jobConf.getCombinerClassName(), shuffleFileBW);
+                new CombinerRun().combinerRun(key, keyListOfValue.get(key).iterator(), mapperOutputKeyFactory, clientJarPath, jobConf.getCombinerClassName(), shuffleFileBW);
             } else {
                 writeToFile(shuffleFileBW, key, keyListOfValue.get(key));
             }
