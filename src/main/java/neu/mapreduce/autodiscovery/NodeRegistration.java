@@ -1,4 +1,4 @@
-package neu.mapreduce.node;
+package neu.mapreduce.autodiscovery;
 
 /**
  * Created by Vishal on 4/22/15.
@@ -15,41 +15,48 @@ import java.io.OutputStreamWriter;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.Iterator;
 
 public class NodeRegistration {
-    /*
-     * Delete file http://jquerypluginscripts.com/nodes.txt
-     * */
-    public static boolean truncateRegistry() throws IOException {
+
+
+    /**
+     * Delete registry file http://jquerypluginscripts.com/nodes.txt
+     * @return true if the file successfully deleted
+     * @throws IOException
+     */
+     public static boolean truncateRegistry() throws IOException {
         String result = sendRequest("trunc", "");
         if (result.equals("true"))
             return true;
         return false;
     }
 
-    /*
+    /**
      * Register called to server with metadata sent in 'data'
-     * */
-    public static String register(String data) throws IOException {
+      * @param Metadata about this autodiscovery
+     * @return Returns the output received from web service
+     * @throws IOException
+     */
+     public static String register(String data) throws IOException {
         return sendRequest("regme", data);
     }
 
-    /*
+
+
+
+    /**
      * Send POST request to Webservice.
-     *
-     * op - Type of operation to be performed as below
-     *    - "trunc": Delete file http://jquerypluginscripts.com/nodes.txt
-     *               Returns boolean to indicate success of failure
-     *    - "regme": Register self in nodes.txt. Public IP of current caller will
-     *               automatically be detected and written in the file
-     * data - Actual data written in the file
-     *
-     * Returns - Actual string written into the nodes.txt or NODATAWRITTEN, true/false
-     *           or OPNotDefined depending upon operation success (Refer PHP file
-     *           for details)
-     * */
-    public static String sendRequest(String op, String data) throws IOException {
+      * @param op Type of operation to be performed as below
+                    "trunc": Delete file http://jquerypluginscripts.com/nodes.txt
+                             Returns boolean to indicate success of failure
+                    "regme": Register self in nodes.txt. Public IP of current caller will
+                             automatically be detected and written in the file
+     * @param data Actual data written in the file
+     * @return Actual string written into the nodes.txt or NODATAWRITTEN,
+     *         true/false or OPNotDefined depending upon operation success (Refer PHP file for details)
+     * @throws IOException
+     */
+     public static String sendRequest(String op, String data) throws IOException {
         URL url = new URL("http://www.jquerypluginscripts.com/mr.php");
         URLConnection conn = url.openConnection();
         conn.setDoOutput(true);
@@ -67,6 +74,12 @@ public class NodeRegistration {
         reader.close();
         return new String(sb);
     }
+
+    /**
+     * Get all slave nodes in the registry
+     * @return Array list having all the slave nodes.
+     * @throws IOException
+     */
     public static ArrayList<NodeDAO> getAllNodes() throws IOException {
 
         InputStream input = new URL( "http://jquerypluginscripts.com/nodes.txt" ).openStream();
@@ -85,6 +98,12 @@ public class NodeRegistration {
         }
         return  al;
     }
+
+    /**
+     * Get various IP addresses of the current slave autodiscovery. These IPs are taken Operating System
+     * @return All IPs representing this slave in string
+     * @throws SocketException
+     */
     public static String getIPsInString() throws SocketException {
         StringBuilder sb = new StringBuilder();
         Enumeration e = NetworkInterface.getNetworkInterfaces();
@@ -99,21 +118,5 @@ public class NodeRegistration {
             }
         }
         return new String(sb);
-    }
-    public static void main(String[] args) throws Exception {
-        // See http://jquerypluginscripts.com/nodes.txt in the browser for result
-       // registerThisNode("|slave");
-//        ArrayList<NodeDAO> x = getAllNodes();
-//        Iterator<NodeDAO> it = x.iterator();
-//        while (it.hasNext()){
-//            NodeDAO n = it.next();
-//            System.out.println(n.getIp() + " " + n.getMessagingServicePort() + " " + n.getFileTransferPort());
-//        }
-       // System.out.println(sendRequest("regme", "data"));
-
-        // Below line will delete nodes.txt on server
-         System.out.println(truncateRegistry());
-//
-       // NodeDAO.releaseSocket();
     }
 }

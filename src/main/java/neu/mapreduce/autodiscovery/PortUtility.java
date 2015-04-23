@@ -1,4 +1,4 @@
-package neu.mapreduce.node;
+package neu.mapreduce.autodiscovery;
 
 /**
  * Created by vishal on 4/13/15.
@@ -9,21 +9,21 @@ import java.net.ServerSocket;
 
 /**
  * Finds an available port on localhost.
+ * Reference: http://fahdshariff.blogspot.com/2012/10/java-find-available-port-number.html
  */
-public class PortFinder {
+public class PortUtility {
     private static final int MIN_PORT_NUMBER = 7000;
     private static final int MAX_PORT_NUMBER = 10000;
+    private static  int nextPortNumber = MIN_PORT_NUMBER;
 
     /**
-     * Finds a free port between
-     * {@link #MIN_PORT_NUMBER} and {@link #MAX_PORT_NUMBER}.
-     *
-     * @return a free port
-     * @throw RuntimeException if a port could not be found
+     * Find a free port number between MIN_PORT_NUMBER and MAX_PORT_NUMBER
+     * @return Next free port number
      */
     public static int findFreePort() {
-        for (int i = MIN_PORT_NUMBER; i <= MAX_PORT_NUMBER; i++) {
+        for (int i = nextPortNumber; i <= MAX_PORT_NUMBER; i++) {
             if (available(i)) {
+                nextPortNumber = i + 1;
                 return i;
             }
         }

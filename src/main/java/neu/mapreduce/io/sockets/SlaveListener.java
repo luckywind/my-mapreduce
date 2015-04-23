@@ -3,7 +3,7 @@ package neu.mapreduce.io.sockets;
 import api.JobConf;
 import neu.mapreduce.core.factory.JobConfFactory;
 import neu.mapreduce.core.shuffle.ShuffleRun;
-import neu.mapreduce.node.NodeDAO;
+import neu.mapreduce.autodiscovery.NodeDAO;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;

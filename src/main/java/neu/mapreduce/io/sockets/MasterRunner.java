@@ -1,8 +1,8 @@
 package neu.mapreduce.io.sockets;
 
 import neu.mapreduce.io.fileSplitter.SplitFile;
-import neu.mapreduce.node.NodeDAO;
-import neu.mapreduce.node.NodeRegistration;
+import neu.mapreduce.autodiscovery.NodeDAO;
+import neu.mapreduce.autodiscovery.NodeRegistration;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
