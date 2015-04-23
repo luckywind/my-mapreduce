@@ -1,5 +1,6 @@
 package neu.mapreduce.core.mapper;
 
+import api.JobConf;
 import api.MyContext;
 import neu.mapreduce.core.factory.MapFactory;
 import neu.mapreduce.core.factory.WriteComparableFactory;
@@ -29,22 +30,17 @@ public class MapRun {
      * @param outputFilePath       file path of the mapper output
      * @param shuffleOutputDir     directory path of shuffle output
      * @param clientJarPath        client jar path
-     * @param mapperClassname      class name of the client mapper
-     * @param keyInputClassName    class name of mapper input key
-     * @param valueInputClassName  class name of mapper input value
-     * @param keyOutputClassName   class name of the mapper output key
-     * @param valueOutputClassname class name of mapper output value
-     * @param isCombinerSet        whether combiner set
+     * @param jobConf   Instance of JobConf from the client
      */
-    public void mapRun(String inputFilePath, String outputFilePath, String shuffleOutputDir, String clientJarPath, String mapperClassname, String keyInputClassName, String valueInputClassName, String keyOutputClassName, String valueOutputClassname, boolean isCombinerSet) {
+    public void mapRun(String inputFilePath, String outputFilePath, String shuffleOutputDir, String clientJarPath, JobConf jobConf){
 
         try {
             //Creates a factory to get the object of map given the filename 
             // and location of jar which holds the class file
-            MapFactory mapFactory = new MapFactory(clientJarPath, mapperClassname);
+            MapFactory mapFactory = new MapFactory(clientJarPath, jobConf.getMapperClassName());
             // Creates the factory for mapper input key and value types
-            WriteComparableFactory keyFactory = WriteComparableFactory.generateWriteComparableFactory(keyInputClassName);
-            WriteComparableFactory valueFactory =WriteComparableFactory.generateWriteComparableFactory(valueInputClassName);
+            WriteComparableFactory keyFactory = WriteComparableFactory.generateWriteComparableFactory(jobConf.getMapKeyInputClassName());
+            WriteComparableFactory valueFactory =WriteComparableFactory.generateWriteComparableFactory(jobConf.getMapValueInputClassName());
             BufferedReader brInputChunk = null;
             BufferedWriter bwOutputOfMapper = null;
 
@@ -82,7 +78,7 @@ public class MapRun {
         LOGGER.log(Level.INFO, "Completed map phase. Starting shuffle.");
 
         // Kick of shuffle phase
-        new ShuffleRun().shuffle(outputFilePath, shuffleOutputDir, keyOutputClassName, valueOutputClassname, clientJarPath, isCombinerSet);
+        new ShuffleRun().shuffle(outputFilePath, shuffleOutputDir, clientJarPath, jobConf);
         LOGGER.log(Level.INFO, "Completed shuffle phase.");
     }
 }

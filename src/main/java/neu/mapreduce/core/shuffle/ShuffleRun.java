@@ -1,5 +1,6 @@
 package neu.mapreduce.core.shuffle;
 
+import api.JobConf;
 import api.MyWriteComparable;
 import neu.mapreduce.core.combiner.Combiner;
 import neu.mapreduce.core.factory.WriteComparableFactory;
@@ -32,18 +33,16 @@ public class ShuffleRun {
      * This function takes a input the output file from the map phase and creates one file for each key.
      * This file contains the key on the first line and the its values in sorted order. 
      * In-memory sorting is performed*
-     * @param mapperOutputFilePath
-     * @param locationOfShuffleFiles
-     * @param keyClassname
-     * @param valueClassname
-     * @param clientJarPath
-     * @param isCombinerSet
+     * @param mapperOutputFilePath  Path to mapper's output file
+     * @param locationOfShuffleFiles    Path of the output shuffle files
+     * @param clientJarPath Path to the client JAR
+     * @param jobConf   Instance of JobConf from the client
      */
-    public void shuffle(String mapperOutputFilePath, String locationOfShuffleFiles, String keyClassname, String valueClassname, String clientJarPath, boolean isCombinerSet) {
+    public void shuffle(String mapperOutputFilePath, String locationOfShuffleFiles, String clientJarPath, JobConf jobConf) {
         int shuffleCounter = ZERO;
         Hashtable<String, ArrayList> keyListOfValue = new Hashtable<>();
-        WriteComparableFactory keyFactory = WriteComparableFactory.generateWriteComparableFactory(keyClassname);
-        WriteComparableFactory valueFactory = WriteComparableFactory.generateWriteComparableFactory(valueClassname);
+        WriteComparableFactory keyFactory = WriteComparableFactory.generateWriteComparableFactory(jobConf.getMapKeyOutputClassName());
+        WriteComparableFactory valueFactory = WriteComparableFactory.generateWriteComparableFactory(jobConf.getMapValueOutputClassName());
         new File(locationOfShuffleFiles).mkdir();
         String mappingFilename = locationOfShuffleFiles + "/" + KEY_FILENAME_MAPPING;
         BufferedWriter filemappingBW = null;
@@ -69,8 +68,6 @@ public class ShuffleRun {
                     e.printStackTrace();
                 }
             }//END OF WHILE
-            // TODO: JobConfig Attribute
-            String combinerClassName = "mapperImpl.AirlineReducer";
 
             //POST PROCESSING
             for (String key : keyListOfValue.keySet()) {
@@ -79,9 +76,9 @@ public class ShuffleRun {
                 BufferedWriter newBW = new BufferedWriter(new FileWriter(new File(locationShuffleFile)));
 
                 Collections.sort(keyListOfValue.get(key));
-                if (isCombinerSet) {
+                if (jobConf.isIsCombinerSet()) {
                     keyListOfValue.get(key).iterator();
-                    new Combiner().combinerRun(key, keyListOfValue.get(key).iterator(), keyFactory, clientJarPath, combinerClassName, newBW);
+                    new Combiner().combinerRun(key, keyListOfValue.get(key).iterator(), keyFactory, clientJarPath, jobConf.getCombinerClassName(), newBW);
                 } else {
                     writeToFile(newBW, key, keyListOfValue.get(key));
                     writeToKeyFileMapping(filemappingBW, key, locationShuffleFile);
@@ -92,7 +89,7 @@ public class ShuffleRun {
                 shuffleCounter++;
             }
 
-            if (isCombinerSet) {
+            if (jobConf.isIsCombinerSet()) {
                 LOGGER.log(Level.INFO, "Combiner done!");
             }
 

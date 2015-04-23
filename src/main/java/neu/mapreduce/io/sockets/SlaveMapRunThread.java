@@ -36,7 +36,7 @@ public class SlaveMapRunThread implements Runnable {
      */
     @Override
     public void run() {
-        new MapRun().mapRun(inputFilePath, mapOutputFilePath, shuffleOutputFolder, clientJarPath, jobConf.getMapperClassName(), jobConf.getMapKeyInputClassName(), jobConf.getMapValueInputClassName(), jobConf.getMapKeyOutputClassName(), jobConf.getMapValueOutputClassName(), jobConf.isIsCombinerSet());
+        new MapRun().mapRun(inputFilePath, mapOutputFilePath, shuffleOutputFolder, clientJarPath, jobConf);
         SlaveListener.status = ConnectionTypes.JOB_COMPLETE;
     }
 }

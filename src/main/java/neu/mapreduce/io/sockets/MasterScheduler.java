@@ -22,7 +22,7 @@ import java.util.logging.Logger;
 public class MasterScheduler {
 
     public static final int MASTER_FT_PORT_MAPPER = 6060;
-    public static final int MASTER_FT_PORT_REDUCER = 9061;
+    public static final int MASTER_FT_PORT_REDUCER = 6061;
     
     private static final Logger LOGGER = Logger.getLogger(MasterScheduler.class.getName());
    // private static final Integer NUM_REDUCERS = 1;
@@ -320,7 +320,6 @@ public class MasterScheduler {
                 while(!shuffleIn.readLine().equals(Message.FILE_SENT)){
 
                 }
-                LOGGER.log(Level.INFO, "File sent. File details: " + fileLoc);
             }
         }
         reducerOut.println(Message.RUN_REDUCE + ":" + jobConfClassName);
