@@ -33,8 +33,8 @@ public class ReduceRun {
      * @param clientJarPath                   Location of client JAR
      */
     public void reduceRun(String outputFilePath, List<String> listOfMergedShuffleFileLocation, String mapperOutputKeyClassType, String mapperOutputpValueClassType, String clientReducerClass, String clientJarPath) {
-        WriteComparableFactory keyFactory = generateWriteComparableFactory(mapperOutputKeyClassType);
-        WriteComparableFactory valueFactory = generateWriteComparableFactory(mapperOutputpValueClassType);
+        WriteComparableFactory keyFactory = WriteComparableFactory.generateWriteComparableFactory(mapperOutputKeyClassType);
+        WriteComparableFactory valueFactory = WriteComparableFactory.generateWriteComparableFactory(mapperOutputpValueClassType);
         BufferedWriter reducerOutputBW = null;
         try {
             reducerOutputBW = new BufferedWriter(new FileWriter(new File(outputFilePath)));
@@ -113,24 +113,4 @@ public class ReduceRun {
         }
         return null;
     }
-
-    /**
-     * Creates a WriteComparableFactory from the given class name. Given class should implement WriteComparable interface*
-     *
-     * @param classname class name of the whose WriteComparableFactory factory needs to created
-     * @return returns WriteComparableFactory or null if there is exception
-     */
-    protected static WriteComparableFactory generateWriteComparableFactory(String classname) {
-        Class keyClass;
-        try {
-            keyClass = Class.forName(classname);
-            return new WriteComparableFactory(keyClass);
-        } catch (ClassNotFoundException e) {
-            LOGGER.log(Level.SEVERE, "Class not found:" + classname);
-        } catch (InstantiationException | IllegalAccessException e) {
-            LOGGER.log(Level.SEVERE, "Error while instantiating the factory");
-        }
-        return null;
-    }
-
 }

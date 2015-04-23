@@ -17,48 +17,50 @@ import java.util.logging.Logger;
 /**
  * Created by mit, srikar, vishal on 4/8/15.
  */
-public class Shuffle {
-    private final static Logger LOGGER = Logger.getLogger(Shuffle.class.getName());
+public class ShuffleRun {
+    private final static Logger LOGGER = Logger.getLogger(ShuffleRun.class.getName());
     public final static String INPUT_FILE_KEYVALUE_SEPARATOR = "\t";
     public final static String OUTPUT_SHUFFLE_FILE_VALUE_SEPARATOR = "\t";
     private final static String OUTPUT_SHUFFLE_FILE_LINE_SEPARATOR = "\n";
     public final static String KEY_FILENAME_MAPPING = "keyfilemapping";
     private final static int KEY_INDEX = 0;
     private final static int VALUE_INDEX = 1;
+    public static final int ZERO = 0;
+    public static final int TWO = 2;
 
-
+    /**
+     * This function takes a input the output file from the map phase and creates one file for each key.
+     * This file contains the key on the first line and the its values in sorted order. 
+     * In-memory sorting is performed*
+     * @param mapperOutputFilePath
+     * @param locationOfShuffleFiles
+     * @param keyClassname
+     * @param valueClassname
+     * @param clientJarPath
+     * @param isCombinerSet
+     */
     public void shuffle(String mapperOutputFilePath, String locationOfShuffleFiles, String keyClassname, String valueClassname, String clientJarPath, boolean isCombinerSet) {
-        int shuffleCounter = 0;
-        Hashtable<String, ArrayList> keyListOfValue = new Hashtable<String, ArrayList>();
-
-        WriteComparableFactory keyFactory = generateWriteComparableFactory(keyClassname);
-        WriteComparableFactory valueFactory = generateWriteComparableFactory(valueClassname);
-
+        int shuffleCounter = ZERO;
+        Hashtable<String, ArrayList> keyListOfValue = new Hashtable<>();
+        WriteComparableFactory keyFactory = WriteComparableFactory.generateWriteComparableFactory(keyClassname);
+        WriteComparableFactory valueFactory = WriteComparableFactory.generateWriteComparableFactory(valueClassname);
         new File(locationOfShuffleFiles).mkdir();
         String mappingFilename = locationOfShuffleFiles + "/" + KEY_FILENAME_MAPPING;
         BufferedWriter filemappingBW = null;
         BufferedReader inputBufferedReader = null;
         try {
-
             filemappingBW = new BufferedWriter(new FileWriter(new File(mappingFilename)));
             inputBufferedReader = new BufferedReader(new FileReader(new File(mapperOutputFilePath)));
-
             String line;
-
             while ((line = inputBufferedReader.readLine()) != null) {
-
-                String[] keyvalue = line.split(INPUT_FILE_KEYVALUE_SEPARATOR, 2);
-
-                if (keyvalue.length < 2) {
+                String[] keyvalue = line.split(INPUT_FILE_KEYVALUE_SEPARATOR, TWO);
+                if (keyvalue.length < TWO) {
                     LOGGER.log(Level.WARNING, "SHUFFLE: Ignoring one line as it does not have a key and value. Line:" + keyvalue);
                     continue;
                 }
-
                 if (!keyListOfValue.containsKey(keyvalue[KEY_INDEX])) {
                     keyListOfValue.put(keyvalue[KEY_INDEX], new ArrayList());
                 }
-
-
                 try {
                     keyListOfValue.get(keyvalue[KEY_INDEX]).add(valueFactory.getNewInstance().deserialize(keyvalue[VALUE_INDEX]));
                 } catch (IllegalAccessException e) {
@@ -66,9 +68,7 @@ public class Shuffle {
                 } catch (InstantiationException e) {
                     e.printStackTrace();
                 }
-
             }//END OF WHILE
-
             // TODO: JobConfig Attribute
             String combinerClassName = "mapperImpl.AirlineReducer";
 
@@ -144,7 +144,7 @@ public class Shuffle {
         }*/
     }
 
-    private static WriteComparableFactory generateWriteComparableFactory(String classname) {
+ /*   private static WriteComparableFactory generateWriteComparableFactory(String classname) {
         Class keyClass = null;
         try {
             keyClass = Class.forName(classname);
@@ -156,6 +156,6 @@ public class Shuffle {
             e.printStackTrace();
         }
         return null;
-    }
+    }*/
 
 }

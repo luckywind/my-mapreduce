@@ -2,6 +2,9 @@ package neu.mapreduce.core.factory;
 
 import api.MyWriteComparable;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * Created by mit,srikar,vishal on 4/8/15.
  */
@@ -15,6 +18,8 @@ import api.MyWriteComparable;
  */
 
 public final class WriteComparableFactory<T extends MyWriteComparable> {
+
+    private final static Logger LOGGER = Logger.getLogger(WriteComparableFactory.class.getName());
 
     private Class<T> typeArgumentClass;
     private T singletonObject;
@@ -48,6 +53,23 @@ public final class WriteComparableFactory<T extends MyWriteComparable> {
     public T getNewInstance() throws IllegalAccessException, InstantiationException {
         T myNewT = typeArgumentClass.newInstance();
         return myNewT;
+    }
+
+    /**
+     * Creates a WriteComparableFactory from the given class name. Given class should implement WriteComparable interface*
+     *
+     * @param classname class name of the whose WriteComparableFactory factory needs to created
+     * @return returns WriteComparableFactory or null if there is exception
+     */
+    public static WriteComparableFactory generateWriteComparableFactory(String classname) {
+        try {
+            return new WriteComparableFactory(Class.forName(classname));
+        } catch (ClassNotFoundException e) {
+            LOGGER.log(Level.SEVERE, "Class not found:" + classname);
+        } catch (InstantiationException | IllegalAccessException e) {
+            LOGGER.log(Level.SEVERE, "Error while instantiating the factory");
+        }
+        return null;
     }
 
 }

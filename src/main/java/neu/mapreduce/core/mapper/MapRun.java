@@ -3,7 +3,7 @@ package neu.mapreduce.core.mapper;
 import api.MyContext;
 import neu.mapreduce.core.factory.MapFactory;
 import neu.mapreduce.core.factory.WriteComparableFactory;
-import neu.mapreduce.core.shuffle.Shuffle;
+import neu.mapreduce.core.shuffle.ShuffleRun;
 import neu.mapreduce.io.sockets.IOCommons;
 
 import java.io.*;
@@ -43,8 +43,8 @@ public class MapRun {
             // and location of jar which holds the class file
             MapFactory mapFactory = new MapFactory(clientJarPath, mapperClassname);
             // Creates the factory for mapper input key and value types
-            WriteComparableFactory keyFactory = new WriteComparableFactory(Class.forName(keyInputClassName));
-            WriteComparableFactory valueFactory = new WriteComparableFactory(Class.forName(valueInputClassName));
+            WriteComparableFactory keyFactory = WriteComparableFactory.generateWriteComparableFactory(keyInputClassName);
+            WriteComparableFactory valueFactory =WriteComparableFactory.generateWriteComparableFactory(valueInputClassName);
             BufferedReader brInputChunk = null;
             BufferedWriter bwOutputOfMapper = null;
 
@@ -82,7 +82,7 @@ public class MapRun {
         LOGGER.log(Level.INFO, "Completed map phase. Starting shuffle.");
 
         // Kick of shuffle phase
-        new Shuffle().shuffle(outputFilePath, shuffleOutputDir, keyOutputClassName, valueOutputClassname, clientJarPath, isCombinerSet);
+        new ShuffleRun().shuffle(outputFilePath, shuffleOutputDir, keyOutputClassName, valueOutputClassname, clientJarPath, isCombinerSet);
         LOGGER.log(Level.INFO, "Completed shuffle phase.");
     }
 }

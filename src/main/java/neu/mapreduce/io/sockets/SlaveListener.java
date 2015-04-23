@@ -2,8 +2,7 @@ package neu.mapreduce.io.sockets;
 
 import api.JobConf;
 import neu.mapreduce.core.factory.JobConfFactory;
-import neu.mapreduce.core.shuffle.Shuffle;
-import org.apache.commons.io.IOUtils;
+import neu.mapreduce.core.shuffle.ShuffleRun;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -203,7 +202,7 @@ public class SlaveListener {
      */
     private void sendKeyMappingFile() throws IOException {
         IOCommons.sendFile(
-                SHUFFLE_OUTPUT_FOLDER + (--numMapTasks) + "/" + Shuffle.KEY_FILENAME_MAPPING,
+                SHUFFLE_OUTPUT_FOLDER + (--numMapTasks) + "/" + ShuffleRun.KEY_FILENAME_MAPPING,
                 MasterScheduler.masterIP,
                 MasterScheduler.MASTER_FT_PORT_MAPPER);
     }

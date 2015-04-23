@@ -2,7 +2,7 @@ package neu.mapreduce.io.sockets;
 
 import api.JobConf;
 import neu.mapreduce.core.factory.JobConfFactory;
-import neu.mapreduce.core.shuffle.Shuffle;
+import neu.mapreduce.core.shuffle.ShuffleRun;
 import org.apache.commons.io.IOUtils;
 
 import java.io.*;
@@ -211,7 +211,7 @@ public class MasterScheduler {
         String line;
         while ((line = bufferedReader.readLine()) != null) {
             // key \t filelocation
-            String[] splitLine = line.split(Shuffle.OUTPUT_SHUFFLE_FILE_VALUE_SEPARATOR);
+            String[] splitLine = line.split(ShuffleRun.OUTPUT_SHUFFLE_FILE_VALUE_SEPARATOR);
             if (!keyFileMapping.containsKey(splitLine[0])) {
                 keyFileMapping.put(splitLine[0], new ArrayList<String>());
             }
