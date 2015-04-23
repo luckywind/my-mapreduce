@@ -10,15 +10,16 @@ import java.io.FilenameFilter;
 import java.util.ArrayList;
 
 /**
- * Created by srikar on 4/19/15.
+ * Created by srikar on 4/18/15.
+ */
+
+/**
+ * Thread which runs the reduce task on slave machine
  */
 public class SlaveReduceRunThread implements Runnable {
 
     public static final String OUTPUT_FILE_PATH = SlaveListener.REDUCER_FOLDER_PATH + "/op-reducer";
-    /*public static final String KEY_CLASS_TYPE = "impl.StringWritable";
-    public static final String VALUE_CLASS_TYPE = "impl.FloatWritable";
-    public static final String CLIENT_REDUCER_CLASS = "mapperImpl.AirlineReducer";*/
-    
+
     private JobConf jobConf;
     private String reducerClientJarPath;
 
@@ -27,28 +28,37 @@ public class SlaveReduceRunThread implements Runnable {
         this.jobConf = jobConf;
     }
 
+    /**
+     * Merge all the files from shuffle phase based on key and performs reduce task
+     */
     @Override
     public void run() {
-       // new File(SlaveListener.REDUCER_FOLDER_PATH+"/"+ MasterShuffleMerge.OUTPUT_FILE_NAME).mkdir();
 
         ArrayList<String> listOfMergedFilePath = new ArrayList<>();
         String[] subDirectories = getAllSubDirectories(SlaveListener.REDUCER_FOLDER_PATH);
         MasterShuffleMerge masterShuffleMerge = new MasterShuffleMerge();
-        for(String eachDirectory: subDirectories){
+        for (String eachDirectory : subDirectories) {
             try {
-                //masterShuffleMerge.mergeAllFileInDir(SlaveListener.REDUCER_FOLDER_PATH+"/"+eachDirectory, "impl.StringWritable", "impl.FloatWritable");
-                masterShuffleMerge.mergeAllFileInDir(SlaveListener.REDUCER_FOLDER_PATH+"/"+eachDirectory, jobConf.getMapKeyOutputClassName(), jobConf.getMapValueOutputClassName());
-                listOfMergedFilePath.add(SlaveListener.REDUCER_FOLDER_PATH + "/" + eachDirectory + "/" + MasterShuffleMerge.OUTPUT_FILE_NAME);
+                String currentDirPath = SlaveListener.REDUCER_FOLDER_PATH + "/" + eachDirectory;
+                // merge all the files after shuffle phase
+                masterShuffleMerge.mergeAllFileInDir(currentDirPath, jobConf.getMapKeyOutputClassName(), jobConf.getMapValueOutputClassName());
+                listOfMergedFilePath.add(currentDirPath + "/" + MasterShuffleMerge.OUTPUT_FILE_NAME);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
         }
 
-        new ReduceRun().reduceRun(OUTPUT_FILE_PATH, listOfMergedFilePath, jobConf.getMapKeyOutputClassName(),jobConf.getMapValueOutputClassName(), jobConf.getReducerClassName(), reducerClientJarPath);
+        new ReduceRun().reduceRun(OUTPUT_FILE_PATH, listOfMergedFilePath, jobConf.getMapKeyOutputClassName(), jobConf.getMapValueOutputClassName(), jobConf.getReducerClassName(), reducerClientJarPath);
         SlaveListener.status = ConnectionTypes.JOB_COMPLETE;
     }
-    
-    //returns just names and not complete path
+
+
+    /**
+     * Gets all the sub directories list of a given directory
+     *
+     * @param inputDir name of the input directory
+     * @return all the subdirectories names present inside a given input directory
+     */
     public String[] getAllSubDirectories(String inputDir) {
         File file = new File(inputDir);
         String[] directories = file.list(new FilenameFilter() {
@@ -57,6 +67,8 @@ public class SlaveReduceRunThread implements Runnable {
                 return new File(current, name).isDirectory();
             }
         });
+
+        //returns just names and not complete path
         return directories;
     }
 }

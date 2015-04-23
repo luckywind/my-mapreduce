@@ -9,7 +9,11 @@ import java.util.logging.Logger;
 /**
  * Created by srikar on 4/19/15.
  */
-public class SlaveMapRunThread implements Runnable{
+
+/**
+ * Thread which runs the mapper task on slave machine
+ */
+public class SlaveMapRunThread implements Runnable {
 
     private static final Logger LOGGER = Logger.getLogger(SlaveMapRunThread.class.getName());
 
@@ -27,11 +31,12 @@ public class SlaveMapRunThread implements Runnable{
         this.jobConf = jobConf;
     }
 
+    /**
+     * Run the mapRun phase
+     */
     @Override
     public void run() {
-        // run maprun
         new MapRun().mapRun(inputFilePath, mapOutputFilePath, shuffleOutputFolder, clientJarPath, jobConf.getMapperClassName(), jobConf.getMapKeyInputClassName(), jobConf.getMapValueInputClassName(), jobConf.getMapKeyOutputClassName(), jobConf.getMapValueOutputClassName(), jobConf.isIsCombinerSet());
         SlaveListener.status = ConnectionTypes.JOB_COMPLETE;
-        LOGGER.log(Level.INFO, SlaveListener.status+" should be "+ConnectionTypes.JOB_COMPLETE.toString());
     }
 }
