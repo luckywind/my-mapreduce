@@ -120,7 +120,7 @@ public class SlaveListener {
         } else if (inputMessage.equals(Message.CHANGE_STATUS)) {
             changeToIdle();
         } else if (inputMessage.startsWith(Message.RUN_JOB)) {
-            this.masterIp = inputMessage.split(":")[2];
+            this.masterIp = getMasterIPFromMessage(inputMessage);
             preProcessAndRunMap(socket, getJobConfigClassname(inputMessage));
         } else if (inputMessage.equals(Message.SEND_KEY_MAPPING_FILE_MESSAGE)) {
             sendKeyMappingFile();
@@ -285,10 +285,19 @@ public class SlaveListener {
      */
     private String getJobConfigClassname(String inputMessage) {
         String[] ipMsgSplit = inputMessage.split(":");
-        if(ipMsgSplit.length == TWO){
+        if(ipMsgSplit.length == THREE){
             return ipMsgSplit[ONE];
         }
-        LOGGER.log(Level.SEVERE, "Set jobconfig file name in the msg from Master to Mapper Slave");
+        LOGGER.log(Level.SEVERE, "Error in jobconfig file name in the Master's msg");
+        return null;
+    }
+
+    private String getMasterIPFromMessage(String inputMessage) {
+        String[] ipMsgSplit = inputMessage.split(":");
+        if(ipMsgSplit.length == THREE){
+            return ipMsgSplit[TWO];
+        }
+        LOGGER.log(Level.SEVERE, "Error in Getting master ip from Master's msg");
         return null;
     }
 
