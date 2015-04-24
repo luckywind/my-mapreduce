@@ -25,8 +25,9 @@ public class MasterScheduler {
 
     public static final int MASTER_FT_PORT_MAPPER = 6060;
     public static final int MASTER_FT_PORT_REDUCER = 6061;
-    
+
     private static final Logger LOGGER = Logger.getLogger(MasterScheduler.class.getName());
+    public static final String OUTPUT_PATH = Constants.HOME + Constants.USER + Constants.MR_RUN_FOLDER + Constants.MASTER_FOLER + "/output/";
     public static int keyMappingFileCounter = 0;
     public static final String KEY_MAPPING_FILE = Constants.HOME+Constants.USER+Constants.MR_RUN_FOLDER+Constants.MASTER_FOLER +"/keyMapping";
     private  HashMap<String, Integer> slaveToSlavePorts;
@@ -70,6 +71,7 @@ public class MasterScheduler {
         this.jobConf = jobConfFactory.getSingletonObject();
         this.slaveToSlavePorts = slaveToSlavePorts;
         this.masterIP = NodeRegistration.getIPsInString();
+        new File(OUTPUT_PATH).mkdirs();
     }
 
     /**
@@ -278,7 +280,10 @@ public class MasterScheduler {
                 isCompleted = checkForCompletion(job.getReducerSlaveID());
             }
         }
+        requestOutput();
     }
+
+
 
     /**
      * Allocates tasks to reducers. * 
@@ -341,7 +346,7 @@ public class MasterScheduler {
         BufferedReader shuffleIn = new BufferedReader(
                 new InputStreamReader(shuffleSocket.getInputStream()));
         //SENDSHUFFLEFILE:rmt_ip:rmt_port_msg:local_file_loc:rmt_port_FT
-        shuffleOut.println(Message.SEND_SHUFFLE_FILE + ":" + this.freeSlaveID + ":" + fileLoc.split(":")[2]+":"+slaveToSlavePorts.get(this.freeSlaveID));
+        shuffleOut.println(Message.SEND_SHUFFLE_FILE + ":" + this.freeSlaveID + ":" + fileLoc.split(":")[2] + ":" + slaveToSlavePorts.get(this.freeSlaveID));
         while(!shuffleIn.readLine().equals(Message.FILE_SENT)){}
     }
 
@@ -400,6 +405,31 @@ public class MasterScheduler {
     private String getIp(String freeSlaveID) {
         String[] slaveIdSplit = freeSlaveID.split(":");
         return slaveIdSplit[0];
+    }
+
+    /**
+     * Requests reducer output
+     * @throws IOException
+     */
+
+    private void requestOutput() throws IOException {
+        HashSet<String> reducers = new HashSet<>(job.getReducerSlaveID());
+        int partCounter = 0;
+        for (String reducer : reducers){
+            Socket reducerSocket = this.slaves.get(reducer);
+            PrintWriter reducerOut = new PrintWriter(reducerSocket.getOutputStream(), true);
+            reducerOut.println(Constants.SEND_OUTPUT);
+            IOCommons.receiveFile(new ServerSocket(MASTER_FT_PORT_MAPPER), OUTPUT_PATH + partCounter++);
+        }
+    }
+
+    /**
+     * Gets the port number from ID
+     * @param ID
+     * @return
+     */
+    private int getPort(String ID) {
+        return Integer.parseInt(ID.split(":")[1]);
     }
 
 }

@@ -18,7 +18,8 @@ import java.util.ArrayList;
  */
 public class SlaveReduceRunThread implements Runnable {
 
-    public static final String OUTPUT_FILE_PATH = SlaveListener.REDUCER_FOLDER_PATH + "/op-reducer";
+    public static final String REDUCER_OUTPUT_FILE = "/op-reducer";
+    public static final String OUTPUT_FILE_PATH = SlaveListener.REDUCER_FOLDER_PATH + REDUCER_OUTPUT_FILE;
 
     private JobConf jobConf;
     private String reducerClientJarPath;
