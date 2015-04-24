@@ -416,8 +416,10 @@ public class MasterScheduler {
         for (String reducer : reducers){
             Socket reducerSocket = this.slaves.get(reducer);
             PrintWriter reducerOut = new PrintWriter(reducerSocket.getOutputStream(), true);
+            ServerSocket listener = new ServerSocket(MASTER_FT_PORT_REDUCER);
             reducerOut.println(Message.SEND_OUTPUT);
-            IOCommons.receiveFile(new ServerSocket(MASTER_FT_PORT_MAPPER), this.jobConf.getOutputFilePath() + "/part-" +  partCounter++);
+            IOCommons.receiveFile(listener, this.jobConf.getOutputFilePath() + "/part-" +  partCounter++);
+            listener.close();
         }
     }
 
