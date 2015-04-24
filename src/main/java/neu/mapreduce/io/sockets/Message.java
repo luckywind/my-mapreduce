@@ -20,5 +20,5 @@ public interface Message {
     public static final String IDLE = "Idle";
     public static final String COMPLETE = "Complete";
     public static final String BUSY = "Busy";
-    String SEND_OUTPUT = "send_output";
+    public static final String SEND_OUTPUT = "send_output";
 }

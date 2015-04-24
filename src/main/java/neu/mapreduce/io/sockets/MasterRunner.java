@@ -79,7 +79,6 @@ public class MasterRunner
 
     /**
      * Get the ball rolling. Start point of MasterRunner
-     * @param args
      * @throws IOException
      * @throws ClassNotFoundException
      * @throws NoSuchMethodException
@@ -87,15 +86,9 @@ public class MasterRunner
      * @throws InstantiationException
      * @throws IllegalAccessException
      */
-    public static void main(String[] args) throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    public void runMaster() throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         long start = System.currentTimeMillis();
-        String inputFile = Constants.HOME + Constants.USER + Constants.CLIENT_FOLDER + "/sample.txt";
-        String CLIENT_JAR_WITH_DEPENDENCIES_JAR = "/client-1.4-SNAPSHOT-jar-with-dependencies.jar";
-        String inputJar = Constants.HOME + Constants.USER + Constants.CLIENT_FOLDER + CLIENT_JAR_WITH_DEPENDENCIES_JAR;
-        String jobConfClassName = "mapperImpl.AirlineJobConf";
-        int splitSizeInMB = 64;
-        MasterRunner masterDaemon = new MasterRunner(inputFile, inputJar, jobConfClassName, splitSizeInMB);
-        masterDaemon.runJob();
+        this.runJob();
         long end = System.currentTimeMillis();
         NodeRegistration.truncateRegistry();
         LOGGER.log(Level.INFO, "It ran for " + (end - start) + " milliseconds");
