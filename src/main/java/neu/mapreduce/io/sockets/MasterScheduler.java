@@ -27,13 +27,12 @@ public class MasterScheduler {
     public static final int MASTER_FT_PORT_REDUCER = 6061;
     
     private static final Logger LOGGER = Logger.getLogger(MasterScheduler.class.getName());
-   // private static final Integer NUM_REDUCERS = 1;
-    public String masterIP;
     public static int keyMappingFileCounter = 0;
     public static final String KEY_MAPPING_FILE = Constants.HOME+Constants.USER+Constants.MR_RUN_FOLDER+Constants.MASTER_FOLER +"/keyMapping";
-
-
     private  HashMap<String, Integer> slaveToSlavePorts;
+
+
+    public String masterIP;
     private ArrayList<String> fileSplits;
     private String inputJar;
     private HashMap<String, Socket> slaves;
