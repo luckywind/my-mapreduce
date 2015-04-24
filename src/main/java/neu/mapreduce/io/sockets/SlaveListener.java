@@ -43,6 +43,7 @@ public class SlaveListener {
     public static final int THREE = 3;
     public static final int FOUR = 4;
     public static final String MSG_SPLITTER = ":";
+    private String masterIp;
 
     /**
      * Public constructor
@@ -119,6 +120,7 @@ public class SlaveListener {
         } else if (inputMessage.equals(Message.CHANGE_STATUS)) {
             changeToIdle();
         } else if (inputMessage.startsWith(Message.RUN_JOB)) {
+            this.masterIp = inputMessage.split(":")[2];
             preProcessAndRunMap(socket, getJobConfigClassname(inputMessage));
         } else if (inputMessage.equals(Message.SEND_KEY_MAPPING_FILE_MESSAGE)) {
             sendKeyMappingFile();
@@ -210,7 +212,7 @@ public class SlaveListener {
     private void sendKeyMappingFile() throws IOException {
         IOCommons.sendFile(
                 SHUFFLE_OUTPUT_FOLDER + (--numMapTasks) + "/" + ShuffleRun.KEY_FILENAME_MAPPING,
-                MasterScheduler.masterIP,
+                this.masterIp,
                 MasterScheduler.MASTER_FT_PORT_MAPPER);
     }
 

@@ -145,17 +145,25 @@ public class NodeRegistration {
      * @throws SocketException
      */
     public static String getIPsInString() throws SocketException {
-        StringBuilder sb = new StringBuilder();
-        Enumeration e = NetworkInterface.getNetworkInterfaces();
+        Enumeration<NetworkInterface> e = NetworkInterface.getNetworkInterfaces();
         while (e.hasMoreElements()) {
-            NetworkInterface n = (NetworkInterface) e.nextElement();
-            Enumeration ee = n.getInetAddresses();
-            while (ee.hasMoreElements()) {
-                InetAddress i = (InetAddress) ee.nextElement();
-                sb.append(i.getHostAddress() + " ");
+            NetworkInterface n = null;
+            n = e.nextElement();
+            if (n.getName().equals("wlan0") || n.getName().equals("en0")) {
+                Enumeration<InetAddress> ee = n.getInetAddresses();
+                while (ee.hasMoreElements()) {
+                    //InetAddress i = (InetAddress) ee.nextElement();
+                    InetAddress address = ee.nextElement();
+                    if (address instanceof Inet4Address) {
+                        return address.getHostAddress();
+                        //System.out.println(address.getHostAddress());
+                    }
+                }
             }
+            // NetworkInterface n = (NetworkInterface) e.nextElement();
+
         }
-        return new String(sb);
+        return null;
     }
 
     /**
@@ -165,7 +173,7 @@ public class NodeRegistration {
      */
     public static void main(String[] args) {
         try {
-            System.out.println(truncateRegistry());
+            System.out.println(getIPsInString());
         } catch (IOException e) {
         }
     }

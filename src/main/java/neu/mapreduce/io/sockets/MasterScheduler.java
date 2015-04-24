@@ -1,6 +1,7 @@
 package neu.mapreduce.io.sockets;
 
 import api.JobConf;
+import neu.mapreduce.autodiscovery.NodeRegistration;
 import neu.mapreduce.core.factory.JobConfFactory;
 import neu.mapreduce.core.shuffle.ShuffleRun;
 import org.apache.commons.io.IOUtils;
@@ -10,6 +11,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,7 +28,7 @@ public class MasterScheduler {
     
     private static final Logger LOGGER = Logger.getLogger(MasterScheduler.class.getName());
    // private static final Integer NUM_REDUCERS = 1;
-    public static final String masterIP = "192.168.1.4";
+    public String masterIP;
     public static int keyMappingFileCounter = 0;
     public static final String KEY_MAPPING_FILE = Constants.HOME+Constants.USER+Constants.MR_RUN_FOLDER+Constants.MASTER_FOLER +"/keyMapping";
 
@@ -58,7 +60,7 @@ public class MasterScheduler {
      * @throws MalformedURLException
      * @throws ClassNotFoundException
      */
-    public MasterScheduler(ArrayList<String> fileSplits, String inputJar, HashMap<String, Socket> slaves, String jobConfClassName, HashMap<String, Integer> slaveToSlavePorts) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException, MalformedURLException, ClassNotFoundException {
+    public MasterScheduler(ArrayList<String> fileSplits, String inputJar, HashMap<String, Socket> slaves, String jobConfClassName, HashMap<String, Integer> slaveToSlavePorts) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException, MalformedURLException, ClassNotFoundException, SocketException {
         this.fileSplits = fileSplits;
         this.inputJar = inputJar;
         this.slaves = slaves;
@@ -68,6 +70,7 @@ public class MasterScheduler {
         JobConfFactory jobConfFactory = new JobConfFactory(this.inputJar, jobConfClassName);
         this.jobConf = jobConfFactory.getSingletonObject();
         this.slaveToSlavePorts = slaveToSlavePorts;
+        this.masterIP = NodeRegistration.getIPsInString();
     }
 
     /**
@@ -179,7 +182,7 @@ public class MasterScheduler {
         PrintWriter out = new PrintWriter(slaveSocket.getOutputStream(), true);
         BufferedReader in = new BufferedReader(
                 new InputStreamReader(slaveSocket.getInputStream()));
-        out.println(Message.RUN_JOB +":"+this.jobConfClassName);
+        out.println(Message.RUN_JOB +":"+this.jobConfClassName + ":" + this.masterIP);
         in.readLine();
         //Send split
         sendFile(this.curSplit, getIp(this.freeSlaveID), MASTER_FT_PORT_MAPPER);
@@ -194,8 +197,8 @@ public class MasterScheduler {
     private  ArrayList<HashMap<String, ArrayList<String>>> receiveKeyMappingFiles() throws IOException {
 
         for (String slaveID : this.job.getMapperSlaveID()) {
-            requestKeyMappingFile(slaveID);
             ServerSocket listener = new ServerSocket(MASTER_FT_PORT_MAPPER);
+            requestKeyMappingFile(slaveID);
             IOCommons.receiveFile(listener, KEY_MAPPING_FILE+(keyMappingFileCounter++));
             listener.close();
             updateKeyMappingHashMap(slaveID);
