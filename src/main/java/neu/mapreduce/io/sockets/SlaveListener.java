@@ -285,11 +285,7 @@ public class SlaveListener {
      */
     private String getJobConfigClassname(String inputMessage) {
         String[] ipMsgSplit = inputMessage.split(":");
-        if(ipMsgSplit.length == THREE){
-            return ipMsgSplit[ONE];
-        }
-        LOGGER.log(Level.SEVERE, "Error in jobconfig file name in the Master's msg");
-        return null;
+        return ipMsgSplit[ONE];
     }
 
     private String getMasterIPFromMessage(String inputMessage) {
