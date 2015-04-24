@@ -419,6 +419,7 @@ public class MasterScheduler {
             ServerSocket listener = new ServerSocket(MASTER_FT_PORT_REDUCER);
             reducerOut.println(Message.SEND_OUTPUT);
             IOCommons.receiveFile(listener, this.jobConf.getOutputFilePath() + "/part-" +  partCounter++);
+            listener.close();
         }
     }
 
