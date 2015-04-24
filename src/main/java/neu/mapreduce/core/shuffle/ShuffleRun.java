@@ -17,7 +17,7 @@ import java.util.logging.Logger;
 
 
 /**
- * Created by mit, srikar, vishal on 4/8/15.
+ * Created by mit, srikar on 4/8/15.
  */
 public class ShuffleRun {
     private final static Logger LOGGER = Logger.getLogger(ShuffleRun.class.getName());

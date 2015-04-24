@@ -1,7 +1,7 @@
 package neu.mapreduce.io.sockets;
 
 /**
- * Created by srikar on 4/20/15.
+ * Created by Amitash, Srikar on 4/20/15.
  */
 public interface Message {
 

@@ -1,8 +1,5 @@
 package neu.mapreduce.core.sort;
 
-/**
- * Created by Amitash, Mit on 4/8/15.
- */
 
 import neu.mapreduce.core.factory.WriteComparableFactory;
 

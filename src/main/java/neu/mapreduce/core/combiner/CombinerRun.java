@@ -11,7 +11,7 @@ import java.util.Iterator;
 import java.util.logging.Logger;
 
 /**
- * Created by srikar on 4/18/15.
+ * Created by Mit on 4/18/15.
  */
 public class CombinerRun {
     private final static Logger LOGGER = Logger.getLogger(CombinerRun.class.getName());

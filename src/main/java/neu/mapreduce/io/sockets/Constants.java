@@ -1,7 +1,7 @@
 package neu.mapreduce.io.sockets;
 
 /**
- * Created by srikar on 4/20/15.
+ * Created by Mit, Amitash, Srikar, Vishal on 4/20/15.
  */
 public interface Constants {
     //ONLY CHANGE THESE 2 VALUES FOR NEW USERS

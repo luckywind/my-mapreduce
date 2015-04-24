@@ -8,7 +8,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Created by Amitash on 3/31/15.
+ * Created by Amitash, Srikar on 3/31/15.
  */
 public class SplitFile {
     public static final String PATH_MASTER_FOLDER = Constants.HOME + Constants.USER + Constants.MR_RUN_FOLDER + Constants.MASTER_FOLER;

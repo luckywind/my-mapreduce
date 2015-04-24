@@ -14,7 +14,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Created by Amitash on 4/13/15.
+ * Created by Amitash on 4/13/15. Modified by Srikar, Mit
  */
 public class SlaveListener {
     private static final Logger LOGGER = Logger.getLogger(SlaveListener.class.getName());

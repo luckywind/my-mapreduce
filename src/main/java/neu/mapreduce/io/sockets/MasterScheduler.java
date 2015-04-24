@@ -19,7 +19,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Created by Amitash on 4/18/15.
+ * Created by Amitash on 4/18/15. Modified by Srikar, Vishal, Mit
  */
 public class MasterScheduler {
 
