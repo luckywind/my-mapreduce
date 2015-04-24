@@ -27,6 +27,8 @@ public class NodeRegistration {
     public static final String LINE_SPLITTER = "\n";
     public static final String DATA_FILE_IP_PORT_SPLITTER = "\\|";
     public static final int ZERO = 0;
+    public static final String UBUNTU_NETWORK_NAME = "wlan0";
+    public static final String MAC_NETWORK_NAME = "en0";
 
     /**
      * Delete registry file http://jquerypluginscripts.com/nodes.txt
@@ -139,33 +141,37 @@ public class NodeRegistration {
     }
 
     /**
-     * Get various IP addresses of the current slave autodiscovery. These IPs are taken Operating System
+     * Get various IPv4 address addresses of the current slave autodiscovery. These IPs are taken Operating System
      *
-     * @return All IPs representing this slave in string
+     * @return IPv4 address in string
      * @throws SocketException
      */
     public static String getIPsInString() throws SocketException {
         Enumeration<NetworkInterface> e = NetworkInterface.getNetworkInterfaces();
         while (e.hasMoreElements()) {
-            NetworkInterface n = null;
-            n = e.nextElement();
-            if (n.getName().equals("wlan0") || n.getName().equals("en0")) {
-                Enumeration<InetAddress> ee = n.getInetAddresses();
-                while (ee.hasMoreElements()) {
-                    //InetAddress i = (InetAddress) ee.nextElement();
-                    InetAddress address = ee.nextElement();
-                    if (address instanceof Inet4Address) {
-                        return address.getHostAddress();
-                        //System.out.println(address.getHostAddress());
-                    }
-                }
+            NetworkInterface ni = e.nextElement();
+            if (ni.getName().equals(UBUNTU_NETWORK_NAME) || ni.getName().equals(MAC_NETWORK_NAME)) {
+               return getIPFromNetworkInterface(ni);
             }
-            // NetworkInterface n = (NetworkInterface) e.nextElement();
-
         }
         return null;
     }
 
+    /**
+     * Gets IPv4 address from Network interface instance
+     * @param ni Network interface instance
+     * @return IPv4 address in string
+     */
+    private static String getIPFromNetworkInterface(NetworkInterface ni) {
+        Enumeration<InetAddress> inetAddresses = ni.getInetAddresses();
+        while (inetAddresses.hasMoreElements()) {
+            InetAddress address = inetAddresses.nextElement();
+            if (address instanceof Inet4Address) {
+                return address.getHostAddress();
+            }
+        }
+        return null;
+    }
     /**
      * To truncate registry data file*
      *
