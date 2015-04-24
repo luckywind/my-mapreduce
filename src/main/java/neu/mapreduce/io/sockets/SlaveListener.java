@@ -81,7 +81,7 @@ public class SlaveListener {
      * @throws IllegalAccessException
      */
     public void startListening() throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-        System.out.println("Listening for messages on port: "+this.port);
+        System.out.println("Listening for messages on port: " + this.port);
         System.out.println("Listening for File transfer on port: "+this.slaveToSlavePort);
         ServerSocket listener = new ServerSocket(port);
         while (true) {
@@ -132,6 +132,8 @@ public class SlaveListener {
             sendShuffleFiles(inputMessage, socket);
         } else if (inputMessage.startsWith(Message.RUN_REDUCE)) {
             runReduce(getJobConfigClassname(inputMessage));
+        } else if (inputMessage.equals(Constants.SEND_OUTPUT)){
+            IOCommons.sendFile(SlaveReduceRunThread.OUTPUT_FILE_PATH, this.masterIp, MasterScheduler.MASTER_FT_PORT_MAPPER);
         }
     }
 

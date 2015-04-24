@@ -15,4 +15,5 @@ public interface Constants {
     public static final String MAP_FOLDER = "/map";
     public static final String MASTER_FOLER = "/master";
 
+    String SEND_OUTPUT = "send_output";
 }
