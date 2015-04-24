@@ -6,7 +6,7 @@ import java.util.HashSet;
 /**
  *
  * Created by srikar on 4/19/15.
- * This is used by master schedular to keep track of slaves that have been
+ * This is used by master scheduler to keep track of slaves that have been
  * used as mappers and reducers
  */
 public class Job {

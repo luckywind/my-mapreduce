@@ -27,7 +27,6 @@ public class MasterScheduler {
     public static final int MASTER_FT_PORT_REDUCER = 6061;
 
     private static final Logger LOGGER = Logger.getLogger(MasterScheduler.class.getName());
-    public static final String OUTPUT_PATH = Constants.HOME + Constants.USER + Constants.MR_RUN_FOLDER + Constants.MASTER_FOLER + "/output/";
     public static int keyMappingFileCounter = 0;
     public static final String KEY_MAPPING_FILE = Constants.HOME+Constants.USER+Constants.MR_RUN_FOLDER+Constants.MASTER_FOLER +"/keyMapping";
     private  HashMap<String, Integer> slaveToSlavePorts;
@@ -71,7 +70,8 @@ public class MasterScheduler {
         this.jobConf = jobConfFactory.getSingletonObject();
         this.slaveToSlavePorts = slaveToSlavePorts;
         this.masterIP = NodeRegistration.getIPsInString();
-        new File(OUTPUT_PATH).mkdirs();
+        String output = this.jobConf.getOutputFilePath();
+        new File(this.jobConf.getOutputFilePath()).mkdirs();
     }
 
     /**
@@ -236,8 +236,6 @@ public class MasterScheduler {
             // updates the array list
             keyFileMapping.get(splitLine[0]).add(slaveID + ":" + splitLine[1]);
         }
-
-
     }
 
     /**
@@ -418,8 +416,8 @@ public class MasterScheduler {
         for (String reducer : reducers){
             Socket reducerSocket = this.slaves.get(reducer);
             PrintWriter reducerOut = new PrintWriter(reducerSocket.getOutputStream(), true);
-            reducerOut.println(Constants.SEND_OUTPUT);
-            IOCommons.receiveFile(new ServerSocket(MASTER_FT_PORT_MAPPER), OUTPUT_PATH + partCounter++);
+            reducerOut.println(Message.SEND_OUTPUT);
+            IOCommons.receiveFile(new ServerSocket(MASTER_FT_PORT_MAPPER), this.jobConf.getOutputFilePath() + "/part-" +  partCounter++);
         }
     }
 

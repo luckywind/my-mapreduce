@@ -132,7 +132,7 @@ public class SlaveListener {
             sendShuffleFiles(inputMessage, socket);
         } else if (inputMessage.startsWith(Message.RUN_REDUCE)) {
             runReduce(getJobConfigClassname(inputMessage));
-        } else if (inputMessage.equals(Constants.SEND_OUTPUT)){
+        } else if (inputMessage.equals(Message.SEND_OUTPUT)){
             IOCommons.sendFile(SlaveReduceRunThread.OUTPUT_FILE_PATH, this.masterIp, MasterScheduler.MASTER_FT_PORT_MAPPER);
         }
     }
