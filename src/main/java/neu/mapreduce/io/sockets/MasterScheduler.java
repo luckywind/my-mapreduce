@@ -311,10 +311,47 @@ public class MasterScheduler {
         //send the client jar
         Socket messageSocket = slaves.get(this.freeSlaveID);
         LOGGER.log(Level.INFO, "Allocating slave "+this.freeSlaveID+" as reducer. # of keys to this reducer: " + keyShuffleFileInfoMapping.size());
-
         PrintWriter reducerOut = new PrintWriter(messageSocket.getOutputStream(), true);
         BufferedReader reducerIn = new BufferedReader(
                 new InputStreamReader(messageSocket.getInputStream()));
+        preProcessReducer(reducerOut, reducerIn);
+
+        //Send all shuffle files to reducer slaves
+        for (String key : keyShuffleFileInfoMapping.keySet()) {
+            //Slave should open a socket and wait for files. It should create a dir for each key
+            reducerOut.println(Message.INITIAL_GET_KEY_SHUFFLE);
+            while(!reducerIn.readLine().equals(Message.JAR_RECEIVED)){}
+            for (String fileLoc : keyShuffleFileInfoMapping.get(key)) {
+                sendShuffleFile(fileLoc);
+            }
+        }
+        //Start reducer
+        reducerOut.println(Message.RUN_REDUCE + ":" + jobConfClassName);
+    }
+
+    /**
+     * Sends instruction to a mapper slave to send the shuffle output to a reducer slave.
+     * @param fileLoc
+     * @throws IOException
+     */
+    private void sendShuffleFile(String fileLoc) throws IOException {
+        String destId = getDestId(fileLoc);
+        Socket shuffleSocket = slaves.get(destId);
+        PrintWriter shuffleOut = new PrintWriter(shuffleSocket.getOutputStream(), true);
+        BufferedReader shuffleIn = new BufferedReader(
+                new InputStreamReader(shuffleSocket.getInputStream()));
+        //SENDSHUFFLEFILE:rmt_ip:rmt_port_msg:local_file_loc:rmt_port_FT
+        shuffleOut.println(Message.SEND_SHUFFLE_FILE + ":" + this.freeSlaveID + ":" + fileLoc.split(":")[2]+":"+slaveToSlavePorts.get(this.freeSlaveID));
+        while(!shuffleIn.readLine().equals(Message.FILE_SENT)){}
+    }
+
+    /**
+     * Sends the client JAR and instructs slave to create temp directories for reducer.
+     * @param reducerOut
+     * @param reducerIn
+     * @throws IOException
+     */
+    private void preProcessReducer(PrintWriter reducerOut, BufferedReader reducerIn) throws IOException {
         reducerOut.println(Message.INITIAL_REDUCE);
         while(!reducerIn.readLine().equals(Message.READY_TO_RECEIVE_JAR)){
 
@@ -326,26 +363,6 @@ public class MasterScheduler {
 
         }
         LOGGER.log(Level.INFO, "Jar sent to reducer");
-        for (String key : keyShuffleFileInfoMapping.keySet()) {
-            //Slave should open a socket and wait for files. It should create a dir for each key
-            reducerOut.println(Message.INITIAL_GET_KEY_SHUFFLE);
-            while(!reducerIn.readLine().equals(Message.JAR_RECEIVED)){
-
-            }
-            for (String fileLoc : keyShuffleFileInfoMapping.get(key)) {
-                String destId = getDestId(fileLoc);
-                Socket shuffleSocket = slaves.get(destId);
-                PrintWriter shuffleOut = new PrintWriter(shuffleSocket.getOutputStream(), true);
-                BufferedReader shuffleIn = new BufferedReader(
-                        new InputStreamReader(shuffleSocket.getInputStream()));
-                //SENDSHUFFLEFILE:rmt_ip:rmt_port_msg:local_file_loc:rmt_port_FT
-                shuffleOut.println(Message.SEND_SHUFFLE_FILE + ":" + this.freeSlaveID + ":" + fileLoc.split(":")[2]+":"+slaveToSlavePorts.get(this.freeSlaveID));
-                while(!shuffleIn.readLine().equals(Message.FILE_SENT)){
-
-                }
-            }
-        }
-        reducerOut.println(Message.RUN_REDUCE + ":" + jobConfClassName);
     }
 
     /**
