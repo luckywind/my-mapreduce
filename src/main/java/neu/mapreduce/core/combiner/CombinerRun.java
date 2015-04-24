@@ -1,6 +1,7 @@
 package neu.mapreduce.core.combiner;
 
 import api.MyContext;
+import neu.mapreduce.core.factory.CombinerFactory;
 import neu.mapreduce.core.factory.ReducerFactory;
 import neu.mapreduce.core.factory.WriteComparableFactory;
 
@@ -38,9 +39,9 @@ public class CombinerRun {
                             String clientJarPath,
                             String combinerClassName,
                             BufferedWriter myContextBW) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException, MalformedURLException, ClassNotFoundException, NullPointerException {
-        ReducerFactory reducerFactory = new ReducerFactory(clientJarPath, combinerClassName);
+        CombinerFactory combinerFactory = new CombinerFactory(clientJarPath, combinerClassName);
         MyContext myContext = new MyContext(myContextBW, KEY_VALUE_SEPARATOR);
-        (reducerFactory.getSingletonObject()).reduce(
+        (combinerFactory.getSingletonObject()).reduce(
                 keyFactory.getNewInstance().deserialize(key),
                 valueIterator, myContext);
     }
