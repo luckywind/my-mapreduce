@@ -81,12 +81,12 @@ public class NodeDAO {
      */
     public void registerThisNode() throws IOException {
         String allIPs = NodeRegistration.getIPsInString();
-        String[] splitedIPs = allIPs.split(MULTIPLE_IP_SPLITTER);
-        String ip = splitedIPs[LOCAL_IP_POSITION];
-        setIp(ip);
+//        String[] splitedIPs = allIPs.split(MULTIPLE_IP_SPLITTER);
+//        String ip = splitedIPs[LOCAL_IP_POSITION];
+        setIp(allIPs);
         setFileTransferPort(PortUtility.findFreePort());
         setMessagingServicePort(PortUtility.findFreePort());
-        NodeRegistration.register(ip + ":" + getFileTransferPort() + ":" + getMessagingServicePort());
+        NodeRegistration.register(allIPs + ":" + getFileTransferPort() + ":" + getMessagingServicePort());
     }
 
     /**
