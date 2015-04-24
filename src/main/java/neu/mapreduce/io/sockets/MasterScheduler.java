@@ -26,7 +26,7 @@ public class MasterScheduler {
     
     private static final Logger LOGGER = Logger.getLogger(MasterScheduler.class.getName());
    // private static final Integer NUM_REDUCERS = 1;
-    public static final String masterIP = "localhost";
+    public static final String masterIP = "192.168.1.4";
     public static int keyMappingFileCounter = 0;
     public static final String KEY_MAPPING_FILE = Constants.HOME+Constants.USER+Constants.MR_RUN_FOLDER+Constants.MASTER_FOLER +"/keyMapping";
 
@@ -44,7 +44,20 @@ public class MasterScheduler {
     private HashMap<String, ArrayList<String>> keyFileMapping;
 
 
-
+    /**
+     * Public constructor
+     * @param fileSplits List of split size
+     * @param inputJar File path of client's input JAR
+     * @param slaves List of all running slaves
+     * @param jobConfClassName Class name of Job configuration
+     * @param slaveToSlavePorts List of all slave to slave ports
+     * @throws NoSuchMethodException
+     * @throws InvocationTargetException
+     * @throws IllegalAccessException
+     * @throws InstantiationException
+     * @throws MalformedURLException
+     * @throws ClassNotFoundException
+     */
     public MasterScheduler(ArrayList<String> fileSplits, String inputJar, HashMap<String, Socket> slaves, String jobConfClassName, HashMap<String, Integer> slaveToSlavePorts) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException, MalformedURLException, ClassNotFoundException {
         this.fileSplits = fileSplits;
         this.inputJar = inputJar;
@@ -287,6 +300,11 @@ public class MasterScheduler {
         }
     }
 
+    /**
+     * Initiates reducer job
+     * @param keyShuffleFileInfoMapping
+     * @throws IOException
+     */
     private void initiateReducerSlaveJob(HashMap<String, ArrayList<String>> keyShuffleFileInfoMapping) throws IOException {
         //send the client jar
         Socket messageSocket = slaves.get(this.freeSlaveID);
@@ -328,11 +346,23 @@ public class MasterScheduler {
         reducerOut.println(Message.RUN_REDUCE + ":" + jobConfClassName);
     }
 
+    /**
+     * Gets destination id
+     * @param fileLoc Location of the file
+     * @return
+     */
     private String getDestId(String fileLoc) {
         String[] fileSplit = fileLoc.split(":");
         return (fileSplit[0] + ":" + fileSplit[1]);
     }
 
+    /**
+     * SEnds file to given IP address and port number
+     * @param fileName Location of file to be send
+     * @param ip IP address of destination
+     * @param port Port number of destination
+     * @throws IOException
+     */
     private void sendFile(String fileName, String ip, int port) throws IOException {
         Socket fileSender = new Socket(ip, port);
         OutputStream os = fileSender.getOutputStream();
@@ -343,6 +373,11 @@ public class MasterScheduler {
         fileSender.close();
     }
 
+    /**
+     * Extract IP address from slave id
+     * @param freeSlaveID Slave id
+     * @return
+     */
     private String getIp(String freeSlaveID) {
         String[] slaveIdSplit = freeSlaveID.split(":");
         return slaveIdSplit[0];

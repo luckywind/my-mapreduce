@@ -23,6 +23,14 @@ public class SlaveMapRunThread implements Runnable {
     private String clientJarPath;
     private JobConf jobConf;
 
+    /**
+     * Public constructor
+     * @param inputFilePath File path of input data
+     * @param mapOutputFilePath Output file path
+     * @param shuffleOutputFolder Folder path where shuffle files are kept
+     * @param clientJarPath Path of client JAR
+     * @param jobConf JobConf object
+     */
     public SlaveMapRunThread(String inputFilePath, String mapOutputFilePath, String shuffleOutputFolder, String clientJarPath, JobConf jobConf) {
         this.inputFilePath = inputFilePath;
         this.mapOutputFilePath = mapOutputFilePath;

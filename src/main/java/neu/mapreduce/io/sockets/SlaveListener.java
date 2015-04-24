@@ -44,6 +44,11 @@ public class SlaveListener {
     public static final int FOUR = 4;
     public static final String MSG_SPLITTER = ":";
 
+    /**
+     * Public constructor
+     * @param port
+     * @param slaveToSlavePort
+     */
     public SlaveListener(int port, int slaveToSlavePort) {
         //Setup for communication
         this.port = port;
@@ -130,7 +135,7 @@ public class SlaveListener {
 
     /**
      * Responds with the status of the machine as either Idle, Busy or Job Complete  
-     * @param socket
+     * @param socket Socket information
      * @throws IOException
      */
     private void statusRequestHandler(Socket socket) throws IOException {
@@ -155,8 +160,8 @@ public class SlaveListener {
 
     /**
      * Receives the files from mapper and runs the mapper 
-     * * @param socket
-     * @param jobConfClassName
+     * * @param socket Spcket information
+     * @param jobConfClassName Job config class name
      * @throws IOException
      * @throws ClassNotFoundException
      * @throws NoSuchMethodException
@@ -178,7 +183,7 @@ public class SlaveListener {
 
     /**
      * Initiates a thread to run the map job
-     * @param jobConfClassName
+     * @param jobConfClassName Job configuration class name
      * @throws MalformedURLException
      * @throws ClassNotFoundException
      * @throws NoSuchMethodException
@@ -289,7 +294,7 @@ public class SlaveListener {
      * Given the class name of JobConf class and the jar file, returns an object of JobConf
      * * 
      * @param clientJarPath
-     * @param jobConfClassName
+     * @param jobConfClassName Name of Job config class
      * @return
      * @throws java.net.MalformedURLException
      * @throws ClassNotFoundException
@@ -303,13 +308,16 @@ public class SlaveListener {
         return jobConfFactory.getSingletonObject();
     }
 
-    /*//FOR TESTING
-    public static void main(String[] args) throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
-        //0:8087
-        //SlaveListener listener = new SlaveListener(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
-        SlaveListener listener = new SlaveListener(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
-        listener.startListening();
-    }*/
+    /**
+     * Start slave
+     * @param args
+     * @throws IOException
+     * @throws ClassNotFoundException
+     * @throws NoSuchMethodException
+     * @throws InstantiationException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     */
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
         //0:8087

@@ -28,6 +28,14 @@ public class MasterRunner
     HashMap<String, Integer> slaveToSlavePorts;
     String inputJar;
 
+    /**
+     * Public constructor which receives input data
+     * @param inputFile File path of client's input data
+     * @param inputJar File path of client's input JAR
+     * @param jobConfClassName Name of input job configuration class
+     * @param splitSizeInMB File size for each input chunk to mapper
+     * @throws IOException
+     */
     public MasterRunner(String inputFile, String inputJar, String jobConfClassName, int splitSizeInMB) throws IOException {
         this.splitSizeInMB = splitSizeInMB;
         this.inputJar = inputJar;
@@ -39,33 +47,46 @@ public class MasterRunner
         this.addSlaves();
     }
 
+    /**
+     * Detect and add all running slave nodes.
+     * @throws IOException
+     */
     public void addSlaves() throws IOException {
         ArrayList<NodeDAO> x = NodeRegistration.getAllNodes();
         Iterator<NodeDAO> it = x.iterator();
         while (it.hasNext()) {
             NodeDAO n = it.next();
-            //System.out.println(NodeDAO.getURL(n));
             String ipPort = n.getIp() + ":" + n.getMessagingServicePort();
             slaves.put(ipPort, new Socket(n.getIp(), n.getMessagingServicePort()));
             slaveToSlavePorts.put(ipPort, n.getFileTransferPort());
         }
     }
 
+    /**
+     * Starts running the MapReduce job.
+     * @throws IOException
+     * @throws ClassNotFoundException
+     * @throws NoSuchMethodException
+     * @throws InstantiationException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     */
     public void runJob() throws IOException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
         MasterScheduler masterScheduler = new MasterScheduler(this.fileSplits, this.inputJar, this.slaves, this.jobConfClassName, this.slaveToSlavePorts);
         masterScheduler.scheduleMap();
         System.out.println("Complete");
     }
-    
-    /*public static void main(String[] args) throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-        String inputFile = Constants.HOME + Constants.USER + Constants.CLIENT_FOLDER + "/sample.txt";
-        String CLIENT_JAR_WITH_DEPENDENCIES_JAR = "/client-1.4-SNAPSHOT-jar-with-dependencies.jar";
-        String inputJar =  Constants.HOME + Constants.USER + Constants.CLIENT_FOLDER + CLIENT_JAR_WITH_DEPENDENCIES_JAR;
-        String jobConfClassName = "mapperImpl.AirlineJobConf";
-        int splitSizeInMB = 64;
-        MasterRunner masterDaemon = new MasterRunner(inputFile, inputJar, jobConfClassName, splitSizeInMB);
-        masterDaemon.runJob();
-    }*/
+
+    /**
+     * Get the ball rolling. Start point of MasterRunner
+     * @param args
+     * @throws IOException
+     * @throws ClassNotFoundException
+     * @throws NoSuchMethodException
+     * @throws InvocationTargetException
+     * @throws InstantiationException
+     * @throws IllegalAccessException
+     */
     public static void main(String[] args) throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         long start = System.currentTimeMillis();
         String inputFile = Constants.HOME + Constants.USER + Constants.CLIENT_FOLDER + "/sample.txt";

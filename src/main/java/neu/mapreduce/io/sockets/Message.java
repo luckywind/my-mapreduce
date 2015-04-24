@@ -13,11 +13,11 @@ public interface Message {
     public static final String JAR_RECEIVED = "jarReceived";
     public static final String INITIAL_REDUCE = "initialReduce";
     public static final String READY_FOR_JOB = "readyForJob";
-    String CHANGE_STATUS = "changeStatus";
-    String STATUS = "status";
-    String RUN_JOB = "runJob";
+    public static final String CHANGE_STATUS = "changeStatus";
+    public static final String STATUS = "status";
+    public static final String RUN_JOB = "runJob";
     public static final String READY_TO_RECEIVE_JAR = "readyToReceiveJar";
-    String IDLE = "Idle";
-    String COMPLETE = "Complete";
-    String BUSY = "Busy";
+    public static final String IDLE = "Idle";
+    public static final String COMPLETE = "Complete";
+    public static final String BUSY = "Busy";
 }
